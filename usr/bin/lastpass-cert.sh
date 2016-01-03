@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if ! [ -r .lpass-key -a "$(stat -c '%a')" = "600" ]; then
+if ! [ -r .lpass-key -a "$(stat -c '%a' .lpass-key)" = "600" ]; then
   echo "Requires $(pwd)/.lpass-key with only user access with the lastpass password"
   exit 1
 fi

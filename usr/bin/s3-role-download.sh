@@ -1,18 +1,34 @@
 #!/bin/bash
 
-FILE=$3
-BUCKET=$2
-ROLE=$1
-if [ -z "$4" ]; then
+if ! curl -sf http://169.254.169.254/latest/meta-data/iam/security-credentials/$1 > /dev/null; then
+  ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/info | grep \"InstanceProfileArn\" | awk -NF '\"|/' '{ print $5 }')
+  BUCKET=$1
+  shift
+  FILE=$1
+  shift
+else
+  ROLE=$1
+  shift
+  BUCKET=$1
+  shift
+  FILE=$1
+  shift
+fi
+if [ -z "$1" ]; then
   OUT=$(basename ${FILE})
 else
-  OUT=$4
+  OUT=$1
 fi
+
 CONTENT_TYPE="application/octet-stream"
 DATE=$(date -R)
 RESOURCE="/${BUCKET}/${FILE}"
 TMP=$(mktemp)
-curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${ROLE} | egrep ^[[:space:]]*\" | sed 's/[^\"]*\"\([^\"]*\)\".:.\"\([^\"]*\).*/\1=\2/g' > $TMP
+if ! curl -sf http://169.254.169.254/latest/meta-data/iam/security-credentials/${ROLE} \
+| egrep ^[[:space:]]*\" | sed 's/[^\"]*\"\([^\"]*\)\".:.\"\([^\"]*\).*/\1=\2/g' > $TMP; then
+  echo "Failed to get credentials"
+  exit 1
+fi
 source $TMP
 rm -f $TMP
 SIGNSTR="GET\n\n${CONTENT_TYPE}\n${DATE}\nx-amz-security-token:${Token}\n${RESOURCE}"

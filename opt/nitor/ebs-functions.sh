@@ -78,3 +78,44 @@ delete_on_termination() {
   local DEVICE_PATH=$1
   aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --block-device-mappings "[{\"DeviceName\": \"$DEVICE_PATH\",\"Ebs\":{\"DeleteOnTermination\":true}}]"
 }
+
+# Create snapshot from volume and tag it so it can be found by e.g. find_latest_snapshot
+# For data consistency, it may be a good idea to unmount the volume first.
+# Usage: create_snapshot volume_id tag_key tag_value
+create_snapshot() {
+  local VOLUME_ID=$1
+  local TAG_KEY=$2
+  local TAG_VALUE=$3
+  local SNAPSHOT_ID=$(aws ec2 create-snapshot --volume-id $VOLUME_ID | jq -r '.SnapshotId')
+  if [ "$SNAPSHOT_ID" != "" ]; then
+    echo $SNAPSHOT_ID
+  else
+    ERROR="Snapshot creation failed!"
+    return 1
+  fi
+
+  if ! $(aws ec2 create-tags --resources $SNAPSHOT_ID --tags Key=$TAG_KEY,Value=$TAG_VALUE Key=Name,Value=$TAG_VALUE); then
+    ERROR="Tagging snapshot failed!"
+    return 1
+  fi
+}
+
+# Delete old snapshots tagged with a specific key/value. Keep a number of latest snapshots.
+# Usage: delete_old_snapshots tag_key tag_value number_to_keep
+delete_old_snapshots() {
+  local SNAPSHOT_LOOKUP_TAG_KEY=$1
+  local SNAPSHOT_LOOKUP_TAG_VALUE=$2
+  local KEEP=$3
+  local TO_DELETE
+  if ! TO_DELETE=$(aws ec2 describe-snapshots --filter 'Name=tag:'$SNAPSHOT_LOOKUP_TAG_KEY',Values='$SNAPSHOT_LOOKUP_TAG_VALUE | jq -r '.[]|sort_by(.StartTime)|reverse|.['$KEEP':]|.[]|.SnapshotId'); then
+    ERROR="Lookup for snapshots failed!"
+    return 1
+  fi
+  local ERRORS=0
+  for i in $TO_DELETE;
+  do
+    aws ec2 delete-snapshot --snapshot-id $i
+    ERRORS=$(($ERRORS+$?))
+  done
+  return $ERRORS
+}

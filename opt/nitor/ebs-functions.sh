@@ -55,8 +55,9 @@ create_volume() {
 # Usage: attach_volume volume-id
 attach_volume() {
   local VOLUME_ID=$1
+  local DEVICE_PATH=$2
   local INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-  local VOLUME_ATTACHMENT_STATUS=$(aws ec2 attach-volume --volume-id $VOLUME_ID --instance-id $INSTANCE_ID --device /dev/xvdc | jq -r '.State')
+  local VOLUME_ATTACHMENT_STATUS=$(aws ec2 attach-volume --volume-id $VOLUME_ID --instance-id $INSTANCE_ID --device $DEVICE_PATH | jq -r '.State')
   local COUNTER=0
   while [  $COUNTER -lt 180 ] && [ "$VOLUME_ATTACHMENT_STATUS" != "attached" ]; do
     sleep 1

@@ -30,11 +30,37 @@ find_latest_snapshot() {
 }
 
 # Create new volume from snapshot
-# Usage: create_volume snapshot-id
+# Usage: create_volume snapshot-id [size_gb]
 create_volume() {
   local SNAPSHOT_ID=$1
+  local SIZE_GB=$2
+  if [ -n "$SIZE_GB" ]; then
+    local SIZE="--size $SIZE_GB"
+  fi
   local AVAILABILITY_ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
-  local VOLUME_ID=$(aws ec2 create-volume --snapshot-id $SNAPSHOT_ID --availability-zone $AVAILABILITY_ZONE --volume-type gp2 | jq -r '.VolumeId')
+  local VOLUME_ID=$(aws ec2 create-volume $SIZE --snapshot-id $SNAPSHOT_ID --availability-zone $AVAILABILITY_ZONE --volume-type gp2 | jq -r '.VolumeId')
+  local VOLUME_STATUS=$(aws ec2 describe-volumes --volume-ids $VOLUME_ID | jq -r '.Volumes[].State')
+  local COUNTER=0
+  while [  $COUNTER -lt 180 ] && [ "$VOLUME_STATUS" != "available" ]; do
+    sleep 1
+    VOLUME_STATUS=$(aws ec2 describe-volumes --volume-ids $VOLUME_ID | jq -r '.Volumes[].State')
+    COUNTER=$(($COUNTER+1))
+  done
+  if [ $COUNTER -eq 180 ]; then
+    ERROR="Volume creation failed!"
+    return 1
+  else
+    echo "$VOLUME_ID"
+    return 0
+  fi
+}
+
+# Create new empty volume
+# Usage: create_empty_volume size_gb
+create_empty_volume() {
+  local SIZE_GB=$1
+  local AVAILABILITY_ZONE=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+  local VOLUME_ID=$(aws ec2 create-volume --size $SIZE_GB --availability-zone $AVAILABILITY_ZONE --volume-type gp2 | jq -r '.VolumeId')
   local VOLUME_STATUS=$(aws ec2 describe-volumes --volume-ids $VOLUME_ID | jq -r '.Volumes[].State')
   local COUNTER=0
   while [  $COUNTER -lt 180 ] && [ "$VOLUME_STATUS" != "available" ]; do

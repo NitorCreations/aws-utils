@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if ! curl -sf http://169.254.169.254/latest/meta-data/iam/security-credentials/$1 > /dev/null; then
-  ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/)
+  ROLE=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/ | head -n 1)
   BUCKET=$1
   shift
   FILE=$1

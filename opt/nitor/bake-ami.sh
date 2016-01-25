@@ -25,8 +25,11 @@ fi
 if ! [ -r ./post_install.sh ]; then
   echo -e "#!/bin/bash\n\nexit 0" > ./post_install.sh
 fi
-touch ./packages.txt
+touch ./packages.txt ./repos.txt ./keys.txt
 PACKAGES="$($DIR/list-file-to-json.py packages ./packages.txt)"
+REPOS="$($DIR/list-file-to-json.py repos ./repos.txt)"
+KEYS="$($DIR/list-file-to-json.py keys ./keys.txt)"
+
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
 NAME="${JOB}_$BUILD_NUMBER"
 AMI_TAG="$NAME"
@@ -39,7 +42,7 @@ ansible-playbook -vvvv --flush-cache -i inventory $DIR/bake-ami.yml \
   -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=nitor-intra -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
-  -e root_ami=$AMI -e tstamp=$TSTAMP
+  -e "$REPOS" -e "$KEYS" -e root_ami=$AMI -e tstamp=$TSTAMP
 
 echo "AMI_ID=$(cat ami-id.txt)" > ami.properties
 echo "NAME=$(cat name.txt)" >> ami.properties

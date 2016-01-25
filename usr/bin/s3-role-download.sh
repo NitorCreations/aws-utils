@@ -16,8 +16,13 @@ else
 fi
 if [ -z "$1" ]; then
   OUT=$(basename ${FILE})
+  OUTARG=-o
+elif [ "$1" = "-" ]; then
+  OUT=
+  OUTARG=
 else
   OUT=$1
+  OUTARG=-o
 fi
 
 CONTENT_TYPE="application/octet-stream"
@@ -33,4 +38,4 @@ source $TMP
 rm -f $TMP
 SIGNSTR="GET\n\n${CONTENT_TYPE}\n${DATE}\nx-amz-security-token:${Token}\n${RESOURCE}"
 SIGNATURE=$(echo -en ${SIGNSTR} | openssl sha1 -hmac ${SecretAccessKey} -binary | base64)
-exec curl -s -o $OUT  -X GET -H "Host: ${BUCKET}.s3.amazonaws.com" -H "Date: ${DATE}" -H "Content-Type: ${CONTENT_TYPE}" -H "Authorization: AWS ${AccessKeyId}:${SIGNATURE}" -H "x-amz-security-token: ${Token}" https://${BUCKET}.s3.amazonaws.com/${FILE}
+exec curl -s $OUTARG $OUT  -X GET -H "Host: ${BUCKET}.s3.amazonaws.com" -H "Date: ${DATE}" -H "Content-Type: ${CONTENT_TYPE}" -H "Authorization: AWS ${AccessKeyId}:${SIGNATURE}" -H "x-amz-security-token: ${Token}" https://${BUCKET}.s3.amazonaws.com/${FILE}

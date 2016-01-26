@@ -35,11 +35,16 @@ echo "$NAME" > $WORKSPACE/name.txt
 
 export ANSIBLE_FORCE_COLOR=true
 
-ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
+if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=nitor-intra -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
-  -e root_ami=$AMI -e tstamp=$TSTAMP
-
-echo "AMI_ID=$(cat ami-id.txt)" > $WORKSPACE/ami.properties
-echo "NAME=$(cat name.txt)" >> $WORKSPACE/ami.properties
+  -e root_ami=$AMI -e tstamp=$TSTAMP; then
+  echo "AMI_ID=$(cat ami-id.txt)" > $WORKSPACE/ami.properties
+  echo "NAME=$(cat name.txt)" >> $WORKSPACE/ami.properties
+  echo "SUCCESS"
+  cat ami.properties
+else
+  echo "AMI baking failed"
+  exit 1
+fi

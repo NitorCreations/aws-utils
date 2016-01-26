@@ -69,9 +69,12 @@
          home: "{{ app_home }}"
          createhome: yes
      - script: "{{ workdir }}/pre_install.sh"
-     - yum: name=epel-release
-     - yum: name=* state=latest
-     - yum: name={{ item }}
+     - apt_key: url="{{ item }}" state=present
+       with_items: "{{ keys }}"
+     - apt_repository: repo="{{ item }}"
+       with_items: "{{ repos }}"
+     - apt: update_cache=yes upgrade=dist
+     - apt: name="{{ item }}"
        with_items: "{{ packages }}"
      - script: "{{ workdir }}/post_install.sh"
 

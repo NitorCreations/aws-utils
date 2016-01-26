@@ -1,11 +1,25 @@
 #!/bin/bash
 
 set -e
+: <<'EOF'
 
-onexit_sendlogs () {
-  : <<'EOF'
-  Required policy in template - please update the Ref on the last line if necessary:
+For required parameters, see end of this script.
 
+Required template policies - please update all the Ref resource names as necessary!
+
+  rolepolicyAllowCFNSignal:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: AllowCFNSignal
+          Effect: Allow
+          Action: ['cloudformation:SignalResource']
+          Resource: '*'
+      PolicyName: allowCFNSignal
+      Roles:
+      - {Ref: roleResource}
   rolepolicyCloudWatch:
     Type: AWS::IAM::Policy
     Properties:
@@ -19,6 +33,8 @@ onexit_sendlogs () {
       Roles:
       - {Ref: roleResource}
 EOF
+
+onexit_sendlogs () {
   local cloudwatch_log_group="instanceDeployment"
   aws logs create-log-group --log-group-name "${cloudwatch_log_group}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
   aws logs create-log-stream --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" 2>&1 | grep -v ResourceAlreadyExistsException ||:

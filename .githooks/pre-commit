@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+
+.githooks/license-maintainer/pre-commit

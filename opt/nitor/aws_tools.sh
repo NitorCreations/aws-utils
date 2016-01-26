@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ ! "$CF_paramEipAllocationId" ]; then
-  echo "IP address not associated -- Elastic IP allocation id not configured"
-elif ! aws --region ${CF_AWS__Region} ec2 associate-address --instance-id $INSTANCE_ID --allocation-id ${CF_paramEipAllocationId} --allow-reassociation; then
-  echo "IP address association failed!"
-  exit 1
-fi
+ec2_associate_address () {
+  if [ ! "$CF_paramEipAllocationId" ]; then
+    echo "IP address not associated -- Elastic IP allocation id not configured"
+  elif ! aws --region ${CF_AWS__Region} ec2 associate-address --instance-id $INSTANCE_ID --allocation-id ${CF_paramEipAllocationId} --allow-reassociation; then
+    echo "IP address association failed!"
+    exit 1
+  fi
+}

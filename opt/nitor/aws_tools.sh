@@ -14,18 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-check_parameters () {
-  fail=0
-  for param ; do
-    if ! eval echo \"\$\{"${param}"\}\" | grep -q . ; then
-      echo "Missing parameter: $param"
-      fail=1
-    fi
-  done
-  if [ "$fail" = "1" ]; then
-    exit 1
-  fi
-}
+source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
 # Required parameters: CF_AWS__Region, INSTANCE_ID
 # Optional parameters: CF_paramEipAllocationId

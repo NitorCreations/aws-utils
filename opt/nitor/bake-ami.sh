@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 DIR=$(cd $(dirname $0); pwd -P)
 TSTAMP=$(date +%Y%m%d%H%M%S)
@@ -35,6 +35,7 @@ echo "$NAME" > $WORKSPACE/name.txt
 
 export ANSIBLE_FORCE_COLOR=true
 
+rm -f ami.properties ||:
 if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=nitor-intra -e app_user=$APP_USER \

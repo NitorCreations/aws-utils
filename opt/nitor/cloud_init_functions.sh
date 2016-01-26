@@ -46,3 +46,8 @@ onexit () {
 INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
 trap onexit EXIT
 status=FAILURE
+
+if [ ! "${CF_AWS__StackName}" -o ! "${CF_paramAmi}" -o ! "${CF_AWS__Region}" ]; then # CF_paramAmiName may be empty so don't check for it
+  echo Missing parameters - need CF_AWS__StackName, CF_paramAmi, CF_paramAmiName, CF_AWS__Region
+  exit 1
+fi

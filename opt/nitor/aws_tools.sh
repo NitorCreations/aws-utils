@@ -19,7 +19,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 # Required parameters: CF_AWS__Region, INSTANCE_ID
 # Optional parameters: CF_paramEipAllocationId
 # Required template policies: ec2:AssociateAddress
-ec2_associate_address () {
+aws_ec2_associate_address () {
   check_parameters CF_AWS__Region INSTANCE_ID
   if [ ! "$CF_paramEipAllocationId" ]; then
     echo "IP address not associated -- Elastic IP allocation id not configured"
@@ -30,7 +30,7 @@ ec2_associate_address () {
 }
 
 # Required parameters: CF_AWS__Region, CF_AWS__StackName
-install_metadata_files () {
+aws_install_metadata_files () {
   check_parameters CF_AWS__StackName CF_AWS__Region
   cfn-init -v --stack "${CF_AWS__StackName}" --resource resourceLc --region "${CF_AWS__Region}"
 }

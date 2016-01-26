@@ -65,6 +65,7 @@ onexit_sendlogs () {
 }
 
 onexit () {
+  echo -----------------------------------------------------------------
   set +e
   if [ -x ./fetch-secrets.sh ]; then
     ./fetch-secrets.sh logout

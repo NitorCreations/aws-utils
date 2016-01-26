@@ -16,7 +16,22 @@
 
 DIR=$(cd $(dirname $0); pwd -P)
 TSTAMP=$(date +%Y%m%d%H%M%S)
-
+cleanup() {
+  ssh-agent -k
+}
+if [ -z "$AWS_KEY_NAME" ]; then
+  AWS_KEY_NAME=nitor-intra
+fi
+eval $(ssh-agent)
+if [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
+  ssh-add "$HOME/.ssh/$AWS_KEY_NAME.pem"
+elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.rsa" ]; then
+  ssh-add "$HOME/.ssh/$AWS_KEY_NAME.rsa"
+else
+  echo "Failed to find ssh private key"
+  cleanup
+  exit 1
+fi
 if [ -z "$BUILD_NUMBER" ]; then
   BUILD_NUMBER=$TSTAMP
 else
@@ -47,19 +62,23 @@ AMI_TAG="$NAME"
 echo "$AMI_TAG" > $WORKSPACE/ami-tag.txt
 echo "$NAME" > $WORKSPACE/name.txt
 
-export ANSIBLE_FORCE_COLOR=true
-
+ANSIBLE_FORCE_COLOR=true
+ANSIBLE_HOST_KEY_CHECKING=false
+export ANSIBLE_FORCE_COLOR ANSIBLE_HOST_KEY_CHECKING
 rm -f ami.properties ||:
 if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
-  -e job_name=$JOB -e aws_key_name=nitor-intra -e app_user=$APP_USER \
+  -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
   -e root_ami=$AMI -e tstamp=$TSTAMP; then
   echo "AMI_ID=$(cat ami-id.txt)" > $WORKSPACE/ami.properties
   echo "NAME=$(cat name.txt)" >> $WORKSPACE/ami.properties
   echo "SUCCESS"
   cat ami.properties
+  cleanup
+  exit 0
 else
   echo "AMI baking failed"
+  cleanup
   exit 1
 fi

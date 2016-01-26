@@ -76,7 +76,8 @@ if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
-  -e "$REPOS" -e "$KEYS" -e root_ami=$AMI -e tstamp=$TSTAMP; then
+  -e "$REPOS" -e "$KEYS" -e root_ami=$AMI -e tstamp=$TSTAMP \
+  -e workdir="$(pwd -P)"; then
   echo "AMI_ID=$(cat ami-id.txt)" > $WORKSPACE/ami.properties
   echo "NAME=$(cat name.txt)" >> $WORKSPACE/ami.properties
   echo "SUCCESS"

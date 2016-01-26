@@ -31,11 +31,24 @@ apache_install_certs () {
     ln -sv /etc/letsencrypt/live/${CF_paramDnsName}/chain.pem   $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
     # SSLCACertificateFile?
     /opt/letsencrypt/letsencrypt-auto --help
-  else
+  elif [ "${CF_paramUseLetsencrypt}" = "false" ]; then
     (
       perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
       echo /etc/certs/sub.class1.server.ca.pem
     ) | sort -u | xargs /root/fetch-secrets.sh get 444
     ln -sv /etc/certs/sub.class1.server.ca.pem $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+  else
+    echo "Invalid parameter CF_paramUseLetsencrypt value '${CF_paramUseLetsencrypt}'"
+    exit 1
   fi
+}
+
+apache_disable_and_shutdown_service () {
+  update-rc.d apache2 disable
+  service apache2 stop
+}
+
+apache_enable_and_start_service () {
+  update-rc.d apache2 enable
+  service apache2 start
 }

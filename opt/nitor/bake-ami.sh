@@ -12,7 +12,7 @@ if [ -z "$WORKSPACE" ]; then
   WORKSPACE=$DIR
 fi
 if [ -z "$JOB_NAME" ]; then
-  JOB_NAME="bake-$(basename $(pwd))"
+  JOB_NAME="bake-$(basename $(cd ..; pwd))"
 fi
 if [ -n "$1" ]; then
   AMI="$1"
@@ -30,8 +30,8 @@ PACKAGES="$($DIR/list-file-to-json.py packages ./packages.txt)"
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
 NAME="${JOB}_$BUILD_NUMBER"
 AMI_TAG="$NAME"
-echo "$AMI_TAG" > ami-tag.txt
-echo "$NAME" > name.txt
+echo "$AMI_TAG" > $WORKSPACE/ami-tag.txt
+echo "$NAME" > $WORKSPACE/name.txt
 
 export ANSIBLE_FORCE_COLOR=true
 
@@ -41,5 +41,5 @@ ansible-playbook -vvvv --flush-cache -i inventory $DIR/bake-ami.yml \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
   -e root_ami=$AMI -e tstamp=$TSTAMP
 
-echo "AMI_ID=$(cat ami-id.txt)" > ami.properties
-echo "NAME=$(cat name.txt)" >> ami.properties
+echo "AMI_ID=$(cat ami-id.txt)" > $WORKSPACE/ami.properties
+echo "NAME=$(cat name.txt)" >> $WORKSPACE/ami.properties

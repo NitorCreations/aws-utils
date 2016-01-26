@@ -19,6 +19,9 @@ TSTAMP=$(date +%Y%m%d%H%M%S)
 cleanup() {
   ssh-agent -k
 }
+if [ -r ./settings.sh ]; then
+  source ./settings.sh
+fi
 if [ -z "$AWS_KEY_NAME" ]; then
   AWS_KEY_NAME=nitor-intra
 fi

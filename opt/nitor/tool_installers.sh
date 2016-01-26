@@ -2,7 +2,7 @@
 
 # Functions to install various tools meant to be sourced and used as Functions
 if [ -z "$AWSUTILS_VERSION" ]; then
-  AWSUTILS_VERSION=0.8
+  AWSUTILS_VERSION=0.9
 fi
 if [ -z "$MAVEN_VERSION" ]; then
   MAVEN_VERSION=3.3.9

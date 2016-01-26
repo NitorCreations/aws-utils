@@ -35,7 +35,7 @@ echo "$NAME" > $WORKSPACE/name.txt
 
 export ANSIBLE_FORCE_COLOR=true
 
-ansible-playbook -vvvv --flush-cache -i inventory $DIR/bake-ami.yml \
+ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=nitor-intra -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \

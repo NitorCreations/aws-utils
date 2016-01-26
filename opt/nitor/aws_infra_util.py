@@ -19,6 +19,7 @@ import json
 import sys
 import collections
 import re
+import os
 
 ############################################################################
 # _THE_ yaml & json deserialize/serialize functions
@@ -75,14 +76,17 @@ def import_script(filename):
                 arr.append(line)
     return arr
 
+def resolve_file(file, basefile):
+    return os.path.dirname(basefile) + "/" + file
+
 # data argument is mutated
-def import_scripts(data, path=""):
+def import_scripts(data, basefile, path=""):
     if (not isinstance(data, collections.OrderedDict)):
         return
     for k,v in data.items():
-        import_scripts(v, path + k + "_")
+        import_scripts(v, basefile, path + k + "_")
         if (k == "Fn::ImportFile"):
-            contents = import_script(v)
+            contents = import_script(resolve_file(v, basefile))
             del data[k]
             data['Fn::Join'] = [ "", contents ]
 
@@ -156,7 +160,7 @@ def extract_scripts(data, prefix, path=""):
 
 def yaml_to_json(yaml_file_to_convert):
     data = yaml_load(open(yaml_file_to_convert))
-    import_scripts(data)
+    import_scripts(data, yaml_file_to_convert)
     patch_launchconf_userdata_with_metadata_hash_and_params(data)
     return json_save(data)
 

@@ -68,12 +68,12 @@
          shell: /sbin/nologin
          home: "{{ app_home }}"
          createhome: yes
-     - script: ./pre_install.sh
+     - script: "{{ workdir }}/pre_install.sh"
      - yum: name=epel-release
      - yum: name=* state=latest
      - yum: name={{ item }}
        with_items: "{{ packages }}"
-     - script: ./post_install.sh
+     - script: "{{ workdir }}/post_install.sh"
 
 - name: Create AMI from deployed instance
   hosts: 127.0.0.1

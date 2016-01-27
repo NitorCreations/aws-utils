@@ -56,4 +56,5 @@ update_aws_utils () {
   echo "Updating aws-utils to version $AWSUTILS_VERSION"
   UTILS_VERSION=$AWSUTILS_VERSION-centos
   wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
+  echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version
 }

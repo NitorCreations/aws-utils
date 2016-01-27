@@ -57,13 +57,18 @@ EOF
 }
 
 
+# optional parameters: CF_paramJenkinsGit
 jenkins_fetch_repo () {
-  check_parameters CF_paramJenkinsGit
   sudo -iu jenkins git init /var/lib/jenkins/jenkins-home
-  sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git remote add -f -t master \
-       origin ${CF_paramJenkinsGit}
-  sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
-       --work-tree=/var/lib/jenkins/jenkins-home checkout master
+  if [ "${CF_paramJenkinsGit}" ]; then
+    echo "Using remote jenkins config git repo ${CF_paramJenkinsGit}"
+    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git remote add -f -t master \
+	 origin ${CF_paramJenkinsGit}
+    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
+	 --work-tree=/var/lib/jenkins/jenkins-home checkout master
+  else
+    echo "Created local-only jenkins config git repo"
+  fi
 }
 
 jenkins_merge_default_install_with_repo () {
@@ -107,8 +112,8 @@ cd $DIR
 date
 git add -A
 git commit -m "Syncing latest changes$COMMITMSGSUFFIX" ||:
-git push origin master
 EOF
+    [ ! "${CF_paramJenkinsGit}" ] || echo 'git push origin master' >> /var/lib/jenkins/jenkins-home/sync_git.sh
   fi
   chmod 755 /var/lib/jenkins/jenkins-home/sync_git.sh
 }

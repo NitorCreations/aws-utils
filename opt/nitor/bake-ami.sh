@@ -35,6 +35,9 @@ else
   cleanup
   exit 1
 fi
+if [ -z "$AWSUTILS_VERSION" ]; then
+  AWSUTILS_VERSION=0.15
+fi
 if [ -z "$BUILD_NUMBER" ]; then
   BUILD_NUMBER=$TSTAMP
 else
@@ -73,7 +76,7 @@ ANSIBLE_HOST_KEY_CHECKING=false
 export ANSIBLE_FORCE_COLOR ANSIBLE_HOST_KEY_CHECKING
 rm -f ami.properties ||:
 if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
-  -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
+  -e tools_version=$AWSUTILS_VERSION -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
   -e "$REPOS" -e "$KEYS" -e root_ami=$AMI -e tstamp=$TSTAMP \

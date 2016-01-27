@@ -69,6 +69,7 @@
          home: "{{ app_home }}"
          createhome: yes
      - script: "{{ workdir }}/pre_install.sh"
+     - script: ./install_tools.sh {{ tools_version }}
      - yum: name=epel-release
      - yum: name=* state=latest
      - yum: name={{ item }}

@@ -16,7 +16,11 @@
 
 # Functions to install various tools meant to be sourced and used as Functions
 if [ -z "$AWSUTILS_VERSION" ]; then
-  AWSUTILS_VERSION=0.9
+  if [ -n "${CF_paramAwsUtilsVersion}" ]; then
+    AWSUTILS_VERSION="${CF_paramAwsUtilsVersion}"
+  else
+    AWSUTILS_VERSION=0.15
+  fi
 fi
 if [ -z "$MAVEN_VERSION" ]; then
   MAVEN_VERSION=3.3.9
@@ -47,4 +51,9 @@ install_maven() {
   wget -O - http://mirror.netinch.com/pub/apache/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | tar -xzvf - -C /opt/
   ln -snf /opt/apache-maven-$MAVEN_VERSION /opt/maven
   ln -snf  /opt/maven/bin/mvn /usr/bin/mvn
+}
+update_aws_utils () {
+  echo "Updating aws-utils to version $AWSUTILS_VERSION"
+  UTILS_VERSION=$AWSUTILS_VERSION-centos
+  wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
 }

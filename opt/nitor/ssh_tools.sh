@@ -26,5 +26,5 @@ ssh_install_hostkeys () {
 }
 
 ssh_restart_service () {
-  service ssh restart
+  systemctl restart sshd
 }

@@ -69,6 +69,7 @@
          home: "{{ app_home }}"
          createhome: yes
      - script: "{{ workdir }}/pre_install.sh"
+     - script: ./install_tools.sh {{ tools_version }}
      - apt_key: url="{{ item }}" state=present
        with_items: "{{ keys }}"
      - apt_repository: repo="{{ item }}"

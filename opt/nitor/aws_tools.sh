@@ -34,13 +34,3 @@ aws_install_metadata_files () {
   check_parameters CF_AWS__StackName CF_AWS__Region
   cfn-init -v --stack "${CF_AWS__StackName}" --resource resourceLc --region "${CF_AWS__Region}"
 }
-
-update_aws_utils () {
-  old_version="$(tr -d '\n' < /opt/nitor/aws-utils.version)"
-  if [ "${CF_paramAwsUtilsVersion}" -a "${CF_paramAwsUtilsVersion}" != "${old_version}" ]; then
-    echo "Updating aws-utils from ${old_version} to version ${CF_paramAwsUtilsVersion}"
-    UTILS_VERSION=${CF_paramAwsUtilsVersion}-ubuntu
-    wget -O - https://github.com/NitorCreations/aws-utils/archive/\$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
-    echo ${CF_paramAwsUtilsVersion} > /opt/nitor/aws-utils.version
-  fi
-}

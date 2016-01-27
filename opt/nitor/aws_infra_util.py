@@ -58,7 +58,7 @@ def json_save(data):
 def bash_decode_parameter_name(name):
     return re.sub('__','::',name)
 
-def import_script(filename):
+def import_script(filename, params, template):
     VAR_DECL_RE = re.compile(r'^CF_([^\s=]+)=')
     arr = []
     with open(filename) as f:
@@ -67,6 +67,9 @@ def import_script(filename):
             if (result):
                 bashVarName = result.group(1)
                 varName = bash_decode_parameter_name(bashVarName)
+                if (not varName in params):
+                    print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + template);
+                    sys.exit(1);
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
                 arr.append(line[0:result.end()] + "'")
@@ -79,14 +82,26 @@ def import_script(filename):
 def resolve_file(file, basefile):
     return os.path.dirname(basefile) + "/" + file
 
+def get_params(data):
+    params = set(data['Parameters'].iterkeys())
+    params.add("AWS::AccountId")
+    params.add("AWS::NotificationARNs")
+    params.add("AWS::NoValue")
+    params.add("AWS::Region")
+    params.add("AWS::StackId")
+    params.add("AWS::StackName")
+    return params
+        
 # data argument is mutated
-def import_scripts(data, basefile, path=""):
+def import_scripts(data, basefile, path="", params=None):
+    if (params is None):
+        params = get_params(data)
     if (not isinstance(data, collections.OrderedDict)):
         return
     for k,v in data.items():
-        import_scripts(v, basefile, path + k + "_")
+        import_scripts(v, basefile, path + k + "_", params)
         if (k == "Fn::ImportFile"):
-            contents = import_script(resolve_file(v, basefile))
+            contents = import_script(resolve_file(v, basefile), params, basefile)
             del data[k]
             data['Fn::Join'] = [ "", contents ]
 

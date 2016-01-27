@@ -191,6 +191,10 @@ jenkins_fetch_additional_files () {
   done
 }
 
+jenkins_improve_config_security () {
+  echo false > /var/lib/jenkins/jenkins-home/secrets/slave-to-master-security-kill-switch
+}
+
 jenkins_set_home () {
   sed -i 's/JENKINS_HOME=.*/JENKINS_HOME=\/var\/lib\/jenkins\/jenkins-home/g' /etc/default/jenkins
 }

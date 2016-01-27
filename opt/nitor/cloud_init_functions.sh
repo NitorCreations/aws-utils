@@ -50,9 +50,9 @@ EOF
 
 onexit_sendlogs () {
   local cloudwatch_log_group="instanceDeployment"
-  aws logs create-log-group --log-group-name "${cloudwatch_log_group}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
-  aws logs create-log-stream --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
-  logSeqId=$(aws logs describe-log-streams --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" | jq -r '.logStreams[0].uploadSequenceToken')
+  aws --region "${CF_AWS__Region}" logs create-log-group --log-group-name "${cloudwatch_log_group}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
+  aws --region "${CF_AWS__Region}" logs create-log-stream --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
+  logSeqId=$(aws --region "${CF_AWS__Region}" logs describe-log-streams --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" | jq -r '.logStreams[0].uploadSequenceToken')
   [ "$logSeqId" != "null" ] && logSeqArg=--sequence-token || logSeqId=
   {
     date="$(date "+%F %T")"
@@ -61,7 +61,7 @@ onexit_sendlogs () {
     echo "${date} ${status} ${CF_AWS__StackName} ${ami}"
     cat /var/log/cloud-init-output.log
   } | jq -s -R '[{ timestamp: '`date +%s`'000, message: . }]' \
-    | aws logs put-log-events --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" --log-events file:///dev/stdin $logSeqArg $logSeqId
+    | aws --region "${CF_AWS__Region}" logs put-log-events --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" --log-events file:///dev/stdin $logSeqArg $logSeqId
 }
 
 onexit () {
@@ -71,7 +71,7 @@ onexit () {
     ./fetch-secrets.sh logout
   fi
   onexit_sendlogs
-  aws --region ${CF_AWS__Region} cloudformation signal-resource --stack-name ${CF_AWS__StackName} --logical-resource-id resourceAsg --unique-id $INSTANCE_ID --status $status
+  aws --region "${CF_AWS__Region}" cloudformation signal-resource --stack-name ${CF_AWS__StackName} --logical-resource-id resourceAsg --unique-id $INSTANCE_ID --status $status
 }
 
 [ "${INSTANCE_ID}" ] || INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)

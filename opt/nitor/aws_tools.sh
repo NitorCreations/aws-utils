@@ -36,9 +36,11 @@ aws_install_metadata_files () {
 }
 
 update_aws_utils () {
-  if [ "${CF_paramAwsUtilsVersion}" ]; then
-    echo "Updating aws-utils to version ${CF_paramAwsUtilsVersion}"
+  old_version="$(tr -d '\n' < /opt/nitor/aws-utils.version)"
+  if [ "${CF_paramAwsUtilsVersion}" -a "${CF_paramAwsUtilsVersion}" != "${old_version}" ]; then
+    echo "Updating aws-utils from ${old_version} to version ${CF_paramAwsUtilsVersion}"
     UTILS_VERSION=${CF_paramAwsUtilsVersion}-ubuntu
     wget -O - https://github.com/NitorCreations/aws-utils/archive/\$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
+    echo ${CF_paramAwsUtilsVersion} > /opt/nitor/aws-utils.version
   fi
 }

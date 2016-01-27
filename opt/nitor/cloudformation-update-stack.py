@@ -123,9 +123,11 @@ def deploy(stack_names, yaml_templates, ami_id):
              'ParameterKey=paramAmiName,ParameterValue=' + ami_name,
              'ParameterKey=paramAmiCreated,ParameterValue=' + ami_created
              ]
+        if ("paramAwsUtilsVersion" in template_parameters):
+            update_stack_command.append('ParameterKey=paramAwsUtilsVersion,ParameterValue=' + os.environ['AWSUTILS_VERSION'])
 
         for key, value in template_doc['Parameters'].iteritems():
-            if "paramAmi" not in key and key in previous_stack_parameters:
+            if "paramAmi" not in key and key != 'paramAwsUtilsVersion' and key in previous_stack_parameters:
                 update_stack_command.append('ParameterKey='+key+',UsePreviousValue=true')
 
         print("Updating stack: " + str(update_stack_command))

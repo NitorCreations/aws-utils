@@ -71,8 +71,11 @@ def deploy(stack_names, yaml_templates, ami_id):
 
         if "Parameters" not in template_doc:
             template_doc['Parameters'] = [];
-        template_doc['Parameters']['paramAmiName']    = collections.OrderedDict([("Description", "AMI Name"), ("Type", "String"), ("Default", "")])
-        template_doc['Parameters']['paramAmiCreated'] = collections.OrderedDict([("Description", "AMI Creation Date"), ("Type", "String"), ("Default", "")])
+        template_parameters = template_doc['Parameters']
+        if (not "paramAmiName" in template_parameters):
+            template_parameters['paramAmiName']    = collections.OrderedDict([("Description", "AMI Name"), ("Type", "String"), ("Default", "")])
+        if (not "paramAmiCreated" in template_parameters):
+            template_parameters['paramAmiCreated'] = collections.OrderedDict([("Description", "AMI Creation Date"), ("Type", "String"), ("Default", "")])
 
         json_template = aws_infra_util.json_save(template_doc)
 

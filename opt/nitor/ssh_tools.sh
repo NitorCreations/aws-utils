@@ -24,3 +24,7 @@ ssh_install_hostkeys () {
     # ssh is restarted later in the userdata script when elastic ip has been associated
   fi
 }
+
+ssh_restart_service () {
+  service ssh restart
+}

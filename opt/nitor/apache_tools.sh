@@ -44,11 +44,11 @@ apache_install_certs () {
 }
 
 apache_disable_and_shutdown_service () {
-  update-rc.d apache2 disable
-  service apache2 stop
+  systemctl disable httpd
+  systemctl stop httpd
 }
 
 apache_enable_and_start_service () {
-  update-rc.d apache2 enable
-  service apache2 start
+  systemctl enable httpd
+  systemctl start httpd
 }

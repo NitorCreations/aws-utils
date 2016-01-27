@@ -17,7 +17,7 @@
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
 apache_replace_domain_vars () {
-  check_parameters APACHE_SSL_CONF
+  check_parameters APACHE_SSL_CONF CF_paramDnsName
   perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g' ${APACHE_SSL_CONF}
 }
 

@@ -17,12 +17,18 @@
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
 # Required parameters: CF_AWS__Region, INSTANCE_ID
-# Optional parameters: CF_paramEipAllocationId
-# Required template policies: ec2:AssociateAddress
+# Optional parameters: CF_paramEipAllocationId OR CF_paramEip
+# Required template policies when CF_paramEipAllocationId is used: ec2:AssociateAddress
+# Required template policies when CF_paramEip is used: ec2:AssociateAddress, ec2:DescribeAddresses
 aws_ec2_associate_address () {
   check_parameters CF_AWS__Region INSTANCE_ID
   if [ ! "$CF_paramEipAllocationId" ]; then
-    echo "IP address not associated -- Elastic IP allocation id not configured"
+    if [ "${CF_paramEip}" ]; then
+      CF_paramEipAllocationId="$(set -e ; aws --region eu-west-1 ec2 describe-addresses --public-ips "${CF_paramEip}" | jq -r '.Addresses[0].AllocationId')"
+    fi
+  fi
+  if [ ! "$CF_paramEipAllocationId" ]; then
+    echo "IP address not associated - neither paramEip nor paramEipAllocationId configured (either is sufficient)"
   elif ! aws --region "${CF_AWS__Region}" ec2 associate-address --instance-id "$INSTANCE_ID" --allocation-id "${CF_paramEipAllocationId}" --allow-reassociation; then
     echo "IP address association failed!"
     exit 1

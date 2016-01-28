@@ -14,16 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+SOURCE_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
+
 if [ -z "$1" -o -z "$2" -o -z "$3" -o -z "$4" ]; then
-  echo "Usage: $0 <ami-id> <region> <name> <account> [<account> ...]"
+  echo "Usage: $0 <source-ami-id> <target-region> <target-name> <account> [<account> ...]"
 fi
-AMI_ID=$1
+AMI_ID="$1"
 shift
-REGION=$1
+REGION="$1"
 shift
-NAME=$1
+NAME="$1"
 shift
-IMAGE_ID=$(aws --region "$REGION" ec2 copy-image --source-region eu-west-1 --name "$NAME" --source-image-id "$AMI_ID" | jq -r ".ImageId")
+if [ "$SOURCE_REGION" = "$REGION" ]; then
+  IMAGE_ID=$AMI_ID
+else
+  IMAGE_ID=$(aws --region "$REGION" ec2 copy-image --source-region "$SOURCE_REGION" --name "$NAME" --source-image-id "$AMI_ID" | jq -r ".ImageId")
+fi
 COUNTER=0
 WAIT=3
 while [  $COUNTER -lt 600 ] && [ "$IMAGE_STATUS" != "available" ]; do

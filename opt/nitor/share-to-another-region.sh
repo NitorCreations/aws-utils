@@ -17,7 +17,7 @@
 SOURCE_REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
 
 if [ -z "$1" -o -z "$2" -o -z "$3" -o -z "$4" ]; then
-  echo "Usage: $0 <ami-id> <region> <name> <account> [<account> ...]"
+  echo "Usage: $0 <source-ami-id> <target-region> <target-name> <account> [<account> ...]"
 fi
 AMI_ID="$1"
 shift

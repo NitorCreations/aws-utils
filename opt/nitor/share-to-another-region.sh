@@ -17,11 +17,11 @@
 if [ -z "$1" -o -z "$2" -o -z "$3" -o -z "$4" ]; then
   echo "Usage: $0 <ami-id> <region> <name> <account> [<account> ...]"
 fi
-AMI_ID=$1
+AMI_ID="$1"
 shift
-REGION=$1
+REGION="$1"
 shift
-NAME=$1
+NAME="$1"
 shift
 IMAGE_ID=$(aws --region "$REGION" ec2 copy-image --source-region eu-west-1 --name "$NAME" --source-image-id "$AMI_ID" | jq -r ".ImageId")
 COUNTER=0

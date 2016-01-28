@@ -25,7 +25,11 @@ REGION="$1"
 shift
 NAME="$1"
 shift
-IMAGE_ID=$(aws --region "$REGION" ec2 copy-image --source-region "$SOURCE_REGION" --name "$NAME" --source-image-id "$AMI_ID" | jq -r ".ImageId")
+if [ "$SOURCE_REGION" = "$REGION" ]; then
+  IMAGE_ID=$AMI_ID
+else
+  IMAGE_ID=$(aws --region "$REGION" ec2 copy-image --source-region "$SOURCE_REGION" --name "$NAME" --source-image-id "$AMI_ID" | jq -r ".ImageId")
+fi
 COUNTER=0
 WAIT=3
 while [  $COUNTER -lt 600 ] && [ "$IMAGE_STATUS" != "available" ]; do

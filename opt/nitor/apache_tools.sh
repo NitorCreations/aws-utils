@@ -32,11 +32,12 @@ apache_install_certs () {
     # SSLCACertificateFile?
     /opt/letsencrypt/letsencrypt-auto --help
   elif [ "${CF_paramUseLetsencrypt}" = "false" ]; then
+    DOMAIN=${CF_paramDnsName#*.}
     (
       perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
-      echo /etc/certs/sub.class1.server.ca.pem
+      echo /etc/certs/$DOMAIN.chain
     ) | sort -u | xargs /root/fetch-secrets.sh get 444
-    ln -sv /etc/certs/sub.class1.server.ca.pem $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    ln -sv /etc/certs/$DOMAIN.chain $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
   else
     echo "Invalid parameter CF_paramUseLetsencrypt value '${CF_paramUseLetsencrypt}'"
     exit 1

@@ -22,6 +22,8 @@ jenkins_setup_dotssh () {
   chmod 700 /var/lib/jenkins/.ssh
   /root/fetch-secrets.sh get 400 /var/lib/jenkins/.ssh/${CF_paramDnsName}.rsa
   mv -v /var/lib/jenkins/.ssh/*.rsa /var/lib/jenkins/.ssh/id_rsa
+  ssh-keygen -y -f /var/lib/jenkins/.ssh/id_rsa > /var/lib/jenkins/.ssh/id_rsa.pub
+  chmod 400 /var/lib/jenkins/.ssh/id_rsa.pub
   ssh-keyscan -t rsa github.com >> /var/lib/jenkins/.ssh/known_hosts
   chown -R jenkins:jenkins /var/lib/jenkins/.ssh
 }

@@ -17,7 +17,7 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
       <parameterDefinitions>
         <hudson.model.StringParameterDefinition>
           <name>AMI_ID</name>
-          <description>AMI id to update the stack with.</description>
+          <description>AMI id to update the stack with. Leave empty to use latest {{image}} AMI.</description>
           <defaultValue></defaultValue>
         </hudson.model.StringParameterDefinition>
       </parameterDefinitions>

@@ -1,0 +1,37 @@
+#!/bin/bash -xe
+
+# Copyright 2016 Nitor Creations Oy
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+image="$1" ; shift
+#imagetype="$1" ; shift
+
+# Determine base ami 
+case "${imagetype}" in
+  *) # ubuntu
+    ami_id=ami-47a23a30
+    ;;
+  centos)
+    ami_id=...
+    ;;
+  *)
+    echo "TODO add support for image type {{imagetype}}"
+    exit 1
+    ;;
+esac
+
+# Bake
+cd {{image}}/image
+bash -x $WORKSPACE/aws-utils/bake-ami.sh $ami_id
+#bash -x $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) eu-central-1 $(cat $WORKSPACE/name.txt) 817784778750

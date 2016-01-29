@@ -27,6 +27,7 @@ if [ ! "$AMI_ID" ]; then
   echo "Using AMI_ID $AMI_ID from previous job execution"
 else
   echo "Using AMI_ID $AMI_ID given as job parameter"
+  echo "$AMI_ID" > .prev-ami_id
 fi
 
 aws-utils/cloudformation-update-stack.py "${stack}" "${image}/stack-${stack}/template.yaml" $AMI_ID

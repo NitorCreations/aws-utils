@@ -73,8 +73,8 @@ create_job_from_template () {
 cli list-jobs > "${orig_jobs_file}"
 
 updatetime="$(date "+%F %T %Z")"
-image_template='TEMPLATE ${PREFIX}-{{image}}-bake'
-deploy_template='TEMPLATE ${PREFIX}-{{image}}-deploy-{{stack}}'
+image_template='TEMPLATE '"${PREFIX}"'-{{image}}-bake'
+deploy_template='TEMPLATE '"${PREFIX}"'-{{image}}-deploy-{{stack}}'
 
 for imagebasedir in * ; do
   [ -d "${imagebasedir}" ] || continue

@@ -72,7 +72,7 @@ else
   ( cd aws-utils ; ln -s opt/nitor/* . ; ln -s usr/bin/* . )
 fi
 
-./aws-utils/jenkins-template/deploy-stack.sh &quot;{{image}}&quot; &quot;{{stack}}&quot; &quot;$AMI_ID&quot;
+./aws-utils/jenkins-templates/deploy-stack.sh &quot;{{image}}&quot; &quot;{{stack}}&quot; &quot;$AMI_ID&quot;
 </command>
     </hudson.tasks.Shell>
   </builders>

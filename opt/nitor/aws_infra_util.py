@@ -83,7 +83,7 @@ def resolve_file(file, basefile):
     return os.path.dirname(basefile) + "/" + file
 
 def get_params(data):
-    params = set(data['Parameters'].iterkeys())
+    params = set(data['Parameters'].iterkeys()) if ("Parameters" in data) else set()
     params.add("AWS::AccountId")
     params.add("AWS::NotificationARNs")
     params.add("AWS::NoValue")
@@ -189,10 +189,11 @@ def json_to_yaml(json_file_to_convert):
 # misc json
 
 def locate_launchconf_metadata(data):
-    resources = data["Resources"]
-    for k,v in resources.items():
-        if (v["Type"] == "AWS::AutoScaling::LaunchConfiguration" and "Metadata" in v):
-            return v["Metadata"]
+    if ("Resources" in data):
+        resources = data["Resources"]
+        for k,v in resources.items():
+            if (v["Type"] == "AWS::AutoScaling::LaunchConfiguration" and "Metadata" in v):
+                return v["Metadata"]
     return None
 
 def locate_launchconf_userdata(data):

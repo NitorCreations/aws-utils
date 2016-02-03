@@ -14,6 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+source "infra.properties"
+[ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
+[ -e "${image}/stack-{{stack}}/infra.properties" ] && source "${image}/stack-{{stack}}/infra.properties"
+
 image="$1" ; shift
 stack="$1" ; shift
 AMI_ID="$1" ; shift

@@ -14,24 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-image="$1" ; shift
-#imagetype="$1" ; shift
+source "infra.properties"
+[ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
+[ -e "${image}/stack-{{stack}}/infra.properties" ] && source "${image}/stack-{{stack}}/infra.properties"
 
-# Determine base ami 
-case "${imagetype}" in
-  *) # ubuntu
-    ami_id=ami-47a23a30
-    ;;
-  centos)
-    ami_id=...
-    ;;
-  *)
-    echo "TODO add support for image type {{imagetype}}"
-    exit 1
-    ;;
-esac
+image="$1" ; shift
+
+VAR_AMIID="AMIID_${IMAGETYPE}"
+AMIID="${!VAR_AMIID}"
 
 # Bake
 cd {{image}}/image
 bash -x $WORKSPACE/aws-utils/bake-ami.sh $ami_id
-#bash -x $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) eu-central-1 $(cat $WORKSPACE/name.txt) 817784778750
+for region in ${SHARE_REGIONS//,/ } ; do
+  var_region_accounts=REGION_${region//-/_}_ACCOUNTS
+  if [ ! "${!var_region_accounts}" ]; then
+    echo "Missing setting '${var_region_accounts}' in infra.properties"
+  bash -x $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
+done

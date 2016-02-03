@@ -75,7 +75,7 @@ if true ; then
   wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 3 -C aws-utils
 else
   # latest commit
-  git clone git@github.com:NitorCreations/aws-utils.git
+  git clone -b {{imagetype}} git@github.com:NitorCreations/aws-utils.git
   ( cd aws-utils ; ln -s opt/nitor/* . ; ln -s usr/bin/* . )
 fi
 

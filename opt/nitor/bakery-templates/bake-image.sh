@@ -14,17 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+image="$1" ; shift
+
 source "infra.properties"
 [ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
-[ -e "${image}/stack-{{stack}}/infra.properties" ] && source "${image}/stack-{{stack}}/infra.properties"
-
-image="$1" ; shift
+[ -e "${image}/stack-${stack}/infra.properties" ] && source "${image}/stack-${stack}/infra.properties"
 
 VAR_AMIID="AMIID_${IMAGETYPE}"
 AMIID="${!VAR_AMIID}"
 
 # Bake
-cd {{image}}/image
+cd ${image}/image
 bash -x $WORKSPACE/aws-utils/bake-ami.sh $ami_id
 for region in ${SHARE_REGIONS//,/ } ; do
   var_region_accounts=REGION_${region//-/_}_ACCOUNTS

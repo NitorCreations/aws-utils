@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -13,6 +13,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+set -xe
 
 DIR=$(cd $(dirname $0); pwd -P)
 TSTAMP=$(date +%Y%m%d%H%M%S)

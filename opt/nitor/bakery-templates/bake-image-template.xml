@@ -22,8 +22,8 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
     </com.sonyericsson.rebuild.RebuildSettings>
     <EnvInjectJobProperty plugin="envinject@1.92.1">
       <info>
-        <propertiesContent>APP_USER=nitor
-APP_HOME=/opt/nitor</propertiesContent>
+        <propertiesContent>APP_USER={{app_user}}
+APP_HOME={{app_home}}</propertiesContent>
         <loadFilesFromMaster>false</loadFilesFromMaster>
       </info>
       <on>true</on>

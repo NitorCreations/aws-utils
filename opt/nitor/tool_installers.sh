@@ -53,8 +53,6 @@ install_maven() {
   ln -snf  /opt/maven/bin/mvn /usr/bin/mvn
 }
 update_aws_utils () {
-  echo "Updating aws-utils to version $AWSUTILS_VERSION"
-  UTILS_VERSION=$AWSUTILS_VERSION-ubuntu
-  wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
-  echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version
+  echo "Updating aws-utils from version $(cat /opt/nitor/aws-utils.version) to $AWSUTILS_VERSION"
+  "$(dirname "${BASH_SOURCE[0]}")/install_tools.sh" "${AWSUTILS_VERSION}"
 }

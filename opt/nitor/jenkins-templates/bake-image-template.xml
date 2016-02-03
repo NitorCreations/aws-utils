@@ -6,6 +6,13 @@
 Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{jobupdaterbuild}}.</description>
   <keepDependencies>false</keepDependencies>
   <properties>
+    <org.jenkinsci.plugins.blockqueuedjob.BlockItemJobProperty plugin="block-queued-job@0.2.0">
+      <conditions>
+        <org.jenkinsci.plugins.blockqueuedjob.condition.BuildingBlockQueueCondition>
+          <project>{{jobupdater}}</project>
+        </org.jenkinsci.plugins.blockqueuedjob.condition.BuildingBlockQueueCondition>
+      </conditions>
+    </org.jenkinsci.plugins.blockqueuedjob.BlockItemJobProperty>
     <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.16.1">
       <optOut>false</optOut>
     </com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty>

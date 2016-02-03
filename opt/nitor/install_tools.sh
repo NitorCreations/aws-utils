@@ -22,6 +22,6 @@ else
   AWSUTILS_VERSION="$1"
 fi
 
-UTILS_VERSION=$AWSUTILS_VERSION-centos
+UTILS_VERSION=$AWSUTILS_VERSION-ubuntu
 wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
 echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version

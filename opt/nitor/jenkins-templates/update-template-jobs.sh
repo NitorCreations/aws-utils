@@ -78,19 +78,19 @@ deploy_template="TEMPLATE ${PREFIX}-{{image}}-deploy-{{stack}}"
 
 for imagebasedir in * ; do
   [ -d "${imagebasedir}" ] || continue
-  if [ ! -r "${imagebasedir}/imagetype" ]; then
-    echo "Missing ${imagebasedir}/imagetype, skipping ${imagebasedir}..."
+  imagetype="$(set -e ; awk -F= '$1=="IMAGETYPE" { print $2 }' -- "${imagebasedir}/infra.properties")"
+  if [ ! "${imagetype}" ]; then
+    echo "Missing IMAGETYPE setting in ${imagebasedir}/infra.properties, skipping ${imagebasedir}..."
     continue
   fi
-  imagetype=$(set -e ; cat "${imagebasedir}/imagetype")
   for stackdir in "${imagebasedir}/stack-"* ; do
     stackname="$(set -e ; basename "${stackdir}")"
     stackname="${stackname#stack-}"
-    stackjobname="$(set -e ; create_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}")"
+    stackjobname="$(set -e ; create_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
     stackjobnames="${stackjobnames}${stackjobname},"
   done
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    create_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}"
+    create_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}"
   fi
 done

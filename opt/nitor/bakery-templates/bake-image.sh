@@ -25,9 +25,13 @@ AMIID="${!VAR_AMIID}"
 # Bake
 cd ${image}/image
 bash -x $WORKSPACE/aws-utils/bake-ami.sh $AMIID
+
+echo "--------------------- Share to ${SHARE_REGIONS}"
 for region in ${SHARE_REGIONS//,/ } ; do
   var_region_accounts=REGION_${region//-/_}_ACCOUNTS
   if [ ! "${!var_region_accounts}" ]; then
     echo "Missing setting '${var_region_accounts}' in infra.properties"
+    exit 1
+  fi
   bash -x $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
 done

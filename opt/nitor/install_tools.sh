@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -xe
+
 if [ -z "$1" ]; then
   AWSUTILS_VERSION=0.15
 else

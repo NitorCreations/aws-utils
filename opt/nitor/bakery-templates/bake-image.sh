@@ -18,7 +18,6 @@ image="$1" ; shift
 
 source "infra.properties"
 [ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
-[ -e "${image}/stack-${stack}/infra.properties" ] && source "${image}/stack-${stack}/infra.properties"
 
 VAR_AMIID="AMIID_${IMAGETYPE}"
 AMIID="${!VAR_AMIID}"

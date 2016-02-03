@@ -58,7 +58,7 @@
     - name: Pause for a bit to work around startup related SSH access denied error
       pause: seconds=15
 
-- name: Prepare AMI instance
+- name: Prepare AMI instance - run pre_install, install/update packages and finally post_install
   hosts: "{{ job_name }}-ami-instance"
   sudo: yes
   tasks:
@@ -69,11 +69,11 @@
          home: "{{ app_home }}"
          createhome: yes
      - script: "{{ workdir }}/pre_install.sh"
-     - script: ./install_tools.sh {{ tools_version }}
      - yum: name=epel-release
      - yum: name=* state=latest
      - yum: name={{ item }}
        with_items: "{{ packages }}"
+     - script: ./install_tools.sh {{ tools_version }}
      - script: "{{ workdir }}/post_install.sh"
 
 - name: Create AMI from deployed instance

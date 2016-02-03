@@ -53,8 +53,7 @@ apply_job_template () {
   template_job_file="$(set -e ; cli_get_job "$template_job")"
   new_job_file="${cli_cache}/newjob.xml"
   apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
-  echo "${new_job}"
-  echo "${new_job_file}"
+  echo "${new_job_file}::${new_job}"
 }
 
 create_or_update_job () {
@@ -105,7 +104,9 @@ for imagebasedir in * ; do
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
       manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}")"
-      apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" | { read new_job ; read new_job_file ; }
+      new_job_conf="$(set -e ; apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+      new_job_file="${new_job_conf%%::*}"
+      new_job="${new_job_conf#*::}"
       if [ "${manual_deploy}" ]; then
 	# disable job triggers
 	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!; print $f;' "${new_job_file}"
@@ -118,7 +119,9 @@ for imagebasedir in * ; do
   done
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" | { read new_job ; read new_job_file ; }
+    new_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+    new_job_file="${new_job_conf%%::*}"
+    new_job="${new_job_conf#*::}"
     create_or_update_job "$new_job" "$new_job_file"
   fi
 done

@@ -42,8 +42,10 @@ install_cftools() {
   curl -s https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz | tar -xzvf -
   cd aws-cfn-bootstrap-*
   pip install .
+  cd ..
 }
 install_letsencrypt() {
+  rm -rf /opt/letsencrypt
   git clone https://github.com/letsencrypt/letsencrypt /opt/letsencrypt
   /opt/letsencrypt/letsencrypt-auto --help
 }

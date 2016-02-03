@@ -24,7 +24,7 @@ AMIID="${!VAR_AMIID}"
 
 # Bake
 cd ${image}/image
-bash -x $WORKSPACE/aws-utils/bake-ami.sh $ami_id
+bash -x $WORKSPACE/aws-utils/bake-ami.sh $AMIID
 for region in ${SHARE_REGIONS//,/ } ; do
   var_region_accounts=REGION_${region//-/_}_ACCOUNTS
   if [ ! "${!var_region_accounts}" ]; then

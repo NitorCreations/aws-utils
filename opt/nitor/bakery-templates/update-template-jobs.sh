@@ -103,7 +103,7 @@ for imagebasedir in * ; do
     if [ -d "${stackdir}" ]; then
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
-      manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}")"
+      manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackdir}")"
       new_job_conf="$(set -e ; apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
       new_job_file="${new_job_conf%%::*}"
       new_job="${new_job_conf#*::}"

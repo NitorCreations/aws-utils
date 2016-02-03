@@ -84,10 +84,12 @@ for imagebasedir in * ; do
     continue
   fi
   for stackdir in "${imagebasedir}/stack-"* ; do
-    stackname="$(set -e ; basename "${stackdir}")"
-    stackname="${stackname#stack-}"
-    stackjobname="$(set -e ; create_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
-    stackjobnames="${stackjobnames}${stackjobname},"
+    if [ -d "${stackdir}" ]; then
+      stackname="$(set -e ; basename "${stackdir}")"
+      stackname="${stackname#stack-}"
+      stackjobname="$(set -e ; create_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+      stackjobnames="${stackjobnames}${stackjobname},"
+    fi
   done
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -xe
+
 if [ -z "$1" -o -z "$2" ]; then
   echo "usage: $0 ami-id account-id [account-id ...]"
   exit 1

@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -28,6 +28,10 @@ find_latest_snapshot() {
   local SNAPSHOT_LOOKUP_TAG_KEY=$1
   local SNAPSHOT_LOOKUP_TAG_VALUE=$2
   local SNAPSHOT_ID=$(aws ec2 describe-snapshots --filter 'Name=tag:'$SNAPSHOT_LOOKUP_TAG_KEY',Values='$SNAPSHOT_LOOKUP_TAG_VALUE | jq -r '.[]|max_by(.StartTime)|.SnapshotId')
+  if [ -z "$SNAPSHOT_ID" -o "$SNAPSHOT_ID" = "null" ]; then
+    ERROR="No snapshots found"
+    return 1
+  fi
   local SNAPSHOT_STATUS=$(aws ec2 describe-snapshots --snapshot-ids $SNAPSHOT_ID | jq -r '.[]|.[]|.State')
   local COUNTER=0
   while [  $COUNTER -lt 180 ] && [ "$SNAPSHOT_STATUS" != "completed" ]; do

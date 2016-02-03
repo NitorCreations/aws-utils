@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -xe
+
 image="$1" ; shift
 
 source "infra.properties"
@@ -24,7 +26,7 @@ AMIID="${!VAR_AMIID}"
 
 # Bake
 cd ${image}/image
-bash -x $WORKSPACE/aws-utils/bake-ami.sh $AMIID
+$WORKSPACE/aws-utils/bake-ami.sh $AMIID
 
 echo "--------------------- Share to ${SHARE_REGIONS}"
 for region in ${SHARE_REGIONS//,/ } ; do
@@ -33,5 +35,5 @@ for region in ${SHARE_REGIONS//,/ } ; do
     echo "Missing setting '${var_region_accounts}' in infra.properties"
     exit 1
   fi
-  bash -x $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
+  $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
 done

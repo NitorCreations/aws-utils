@@ -80,8 +80,8 @@ create_or_update_job () {
 get_var () {
   (
     source infra.properties
-    [ ! "$2" ] || source "$2/infra.properties"
-    [ ! "$3" ] || source "$3/infra.properties"
+    [ ! "$2" -o ! -r "$2/infra.properties" ] || source "$2/infra.properties"
+    [ ! "$3" -o ! -r "$3/infra.properties" ] || source "$3/infra.properties"
     echo -n "${!1}"
   )
 }

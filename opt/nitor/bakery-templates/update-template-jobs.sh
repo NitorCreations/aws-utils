@@ -44,7 +44,7 @@ cli_get_job () {
   echo "${file}"
 }
 
-create_job_from_template () {
+apply_job_template () {
   template_job="$1"
   shift
   echo "Creating job based on '$template_job' with parameters" "$@" >&2
@@ -53,6 +53,13 @@ create_job_from_template () {
   template_job_file="$(set -e ; cli_get_job "$template_job")"
   new_job_file="${cli_cache}/newjob.xml"
   apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
+  echo "${new_job}"
+  echo "${new_job_file}"
+}
+
+create_or_update_job () {
+  new_job="$1"
+  new_job_file="$2"
   enable=1
   if fgrep -xq "${new_job}" "${orig_jobs_file}" ; then
     ! cli get-job "${new_job}" | egrep '^  <disabled>true</disabled>$' || enable=0
@@ -70,6 +77,16 @@ create_job_from_template () {
   echo "${new_job}"
 }
 
+# usage get_var <name> [<imagedir> [<stackdir>]]
+get_var () {
+  (
+    source infra.properties
+    [ "$2" ] && source "$2/infra.properties"
+    [ "$3" ] && source "$3/infra.properties"
+    echo -n "${!1}"
+  )
+}
+
 cli list-jobs > "${orig_jobs_file}"
 
 updatetime="$(date "+%F %T %Z")"
@@ -77,8 +94,8 @@ image_template="TEMPLATE ${PREFIX}-{{image}}-bake"
 deploy_template="TEMPLATE ${PREFIX}-{{image}}-deploy-{{stack}}"
 
 for imagebasedir in * ; do
-  [ -r "${imagebasedir}/infra.properties" ] || continue
-  imagetype="$(set -e ; awk -F= '$1=="IMAGETYPE" { print $2 }' "${imagebasedir}/infra.properties")"
+  [ -d "${imagebasedir}" ] || continue
+  imagetype="$(set -e ; get_var IMAGETYPE "${imagebasedir}")"
   if [ ! "${imagetype}" ]; then
     echo "Missing IMAGETYPE setting in ${imagebasedir}/infra.properties, skipping ${imagebasedir}..."
     continue
@@ -87,8 +104,16 @@ for imagebasedir in * ; do
     if [ -d "${stackdir}" ]; then
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
-      stackjobname="$(set -e ; create_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
-      stackjobnames="${stackjobnames}${stackjobname},"
+      manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}")"
+      apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" | { read new_job ; read new_job_file }
+      if [ "${manual_deploy}" ]; then
+	# disable job triggers
+	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!; print $f;' "${new_job_file}"
+      fi
+      stackjobname="$(set -e ; create_or_update_job "$new_job" "$new_job_file")"
+      if [ ! "${manual_deploy}" ]; then
+	stackjobnames="${stackjobnames}${stackjobname},"
+      fi
     fi
   done
   imagedir="${imagebasedir}/image"

@@ -24,7 +24,7 @@ if [ $# != 0 -o ! "$JENKINS_USER" ]; then
 fi
 
 OPT_NITOR_PATH="$(dirname "$0")/../../opt/nitor"
-TEMPLATE_PATH="${OPT_NITOR_PATH}/jenkins-templates"
+TEMPLATE_PATH="${OPT_NITOR_PATH}/bakery-templates"
 
 source "${OPT_NITOR_PATH}/jenkins_tools.sh"
 

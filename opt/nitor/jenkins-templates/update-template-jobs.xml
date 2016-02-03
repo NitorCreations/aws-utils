@@ -56,7 +56,7 @@ else
   ( cd aws-utils ; ln -s opt/nitor/* . ; ln -s usr/bin/* . )
 fi
 
-./aws-utils/jenkins-templates/update-template-jobs.sh &quot;PREFIX&quot;
+./aws-utils/bakery-templates/update-template-jobs.sh &quot;PREFIX&quot;
 </command>
     </hudson.tasks.Shell>
   </builders>

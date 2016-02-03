@@ -82,7 +82,7 @@ else
   ( cd aws-utils ; ln -s opt/nitor/* . ; ln -s usr/bin/* . )
 fi
 
-./aws-utils/jenkins-templates/bake-image.sh &quot;{{image}}&quot;
+./aws-utils/bakery-templates/bake-image.sh &quot;{{image}}&quot;
 </command>
     </hudson.tasks.Shell>
   </builders>

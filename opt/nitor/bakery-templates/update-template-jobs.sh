@@ -78,7 +78,7 @@ deploy_template="TEMPLATE ${PREFIX}-{{image}}-deploy-{{stack}}"
 
 for imagebasedir in * ; do
   [ -r "${imagebasedir}/infra.properties" ] || continue
-  imagetype="$(set -e ; awk -F= '$1=="IMAGETYPE" { print $2 }' -- "${imagebasedir}/infra.properties")"
+  imagetype="$(set -e ; awk -F= '$1=="IMAGETYPE" { print $2 }' "${imagebasedir}/infra.properties")"
   if [ ! "${imagetype}" ]; then
     echo "Missing IMAGETYPE setting in ${imagebasedir}/infra.properties, skipping ${imagebasedir}..."
     continue

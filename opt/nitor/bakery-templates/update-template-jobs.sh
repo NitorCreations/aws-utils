@@ -118,6 +118,7 @@ for imagebasedir in * ; do
   done
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    create_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}"
+    apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" | { read new_job ; read new_job_file ; }
+    create_or_update_job "$new_job" "$new_job_file"
   fi
 done

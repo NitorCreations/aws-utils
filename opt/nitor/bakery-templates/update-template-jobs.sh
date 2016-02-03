@@ -119,7 +119,9 @@ for imagebasedir in * ; do
   done
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    new_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+    app_user="$(set -e ; get_var APP_USER "${imagebasedir}")"
+    app_home="$(set -e ; get_var APP_HOME "${imagebasedir}")"
+    new_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" app_user="${app_user}" app_home="${app_home}" prefix="${PREFIX}")"
     new_job_file="${new_job_conf%%::*}"
     new_job="${new_job_conf#*::}"
     create_or_update_job "$new_job" "$new_job_file"

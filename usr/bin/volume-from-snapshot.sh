@@ -33,6 +33,7 @@ if ! SNAPSHOT_ID=$(find_latest_snapshot $SNAPSHOT_LOOKUP_TAG_KEY $SNAPSHOT_LOOKU
   if ! VOLUME_ID=$(create_empty_volume $SIZE_GB); then
     fail $ERROR
   fi
+  EMPTY_VOLUME=1
 elif ! VOLUME_ID=$(create_volume $SNAPSHOT_ID); then
   fail $ERROR
 fi
@@ -52,6 +53,10 @@ fi
 
 if ! attach_volume $VOLUME_ID $DEVICE; then
   fail $ERROR
+fi
+
+if [ -n "$EMPTY_VOLUME" ]; then
+  mkfs.ext4 $DEVICE
 fi
 
 delete_on_termination $DEVICE

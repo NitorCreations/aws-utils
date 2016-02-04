@@ -51,7 +51,7 @@ apply_job_template () {
   new_job="$(set -e ; echo "$template_job" | sed 's!^TEMPLATE !!' | apply_parameters "$@")"
   echo "Job name: '$new_job'" >&2
   template_job_file="$(set -e ; cli_get_job "$template_job")"
-  new_job_file="${cli_cache}/newjob.xml"
+  new_job_file="$(set -e ; mktemp -p "${cli_cache}" job_XXXXXXXX.xml)"
   apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
   echo "${new_job_file}::${new_job}"
 }
@@ -99,12 +99,17 @@ for imagebasedir in * ; do
     echo "Missing IMAGETYPE setting in ${imagebasedir}/infra.properties, skipping ${imagebasedir}..."
     continue
   fi
+
+  new_image_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+  new_image_job_file="${new_job_conf%%::*}"
+  new_image_job="${new_image_job_conf#*::}"
+
   for stackdir in "${imagebasedir}/stack-"* ; do
     if [ -d "${stackdir}" ]; then
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
       manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackdir}")"
-      new_job_conf="$(set -e ; apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+      new_job_conf="$(set -e ; apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" imagejob="${new_image_job}")"
       new_job_file="${new_job_conf%%::*}"
       new_job="${new_job_conf#*::}"
       if [ "${manual_deploy}" ]; then
@@ -117,11 +122,9 @@ for imagebasedir in * ; do
       fi
     fi
   done
+
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    new_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
-    new_job_file="${new_job_conf%%::*}"
-    new_job="${new_job_conf#*::}"
-    create_or_update_job "$new_job" "$new_job_file"
+    create_or_update_job "$new_image_job" "$new_image_job_file"
   fi
 done

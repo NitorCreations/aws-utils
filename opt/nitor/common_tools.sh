@@ -32,6 +32,7 @@ system_type() {
 }
 
 set_timezone() {
+  # Timezone (based on http://askubuntu.com/a/623299 )
   if [ -z "$tz" ]; then
     tz=Europe/Helsinki
   fi

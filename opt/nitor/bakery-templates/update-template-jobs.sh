@@ -109,7 +109,7 @@ for imagebasedir in * ; do
       new_job="${new_job_conf#*::}"
       if [ "${manual_deploy}" ]; then
 	# disable job triggers
-	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!; print $f;' "${new_job_file}"
+	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!s; print $f;' "${new_job_file}"
       fi
       stackjobname="$(set -e ; create_or_update_job "$new_job" "$new_job_file")"
       if [ ! "${manual_deploy}" ]; then

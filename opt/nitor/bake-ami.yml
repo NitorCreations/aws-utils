@@ -71,11 +71,22 @@
      - script: "{{ workdir }}/pre_install.sh"
      - apt_key: url="{{ item }}" state=present
        with_items: "{{ keys }}"
+       when: ansible_os_family == "Debian"
      - apt_repository: repo="{{ item }}"
        with_items: "{{ repos }}"
+       when: ansible_os_family == "Debian"
      - apt: update_cache=yes upgrade=dist
+       when: ansible_os_family == "Debian"
      - apt: name="{{ item }}"
        with_items: "{{ packages }}"
+       when: ansible_os_family == "Debian"
+     - yum: name=epel-release
+       when: ansible_os_family == "RedHat"
+     - yum: name=* state=latest
+       when: ansible_os_family == "RedHat"
+     - yum: name={{ item }}
+       with_items: "{{ packages }}"
+       when: ansible_os_family == "RedHat"
      - script: ./install_tools.sh {{ tools_version }}
      - script: "{{ workdir }}/post_install.sh"
 

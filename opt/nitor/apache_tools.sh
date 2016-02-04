@@ -101,11 +101,35 @@ MARK
 }
 
 apache_disable_and_shutdown_service () {
-  update-rc.d apache2 disable
-  service apache2 stop
+  case  "$SYSTEM_TYPE" in
+    ubuntu)
+      update-rc.d apache2 disable
+      service apache2 stop
+      ;;
+    centos)
+      systemctl disable httpd
+      systemctl stop httpd
+      ;;
+    *)
+      echo "Unknown system type $SYSTEM_TYPE"
+      exit 1
+      ;;
+  esac
 }
 
 apache_enable_and_start_service () {
-  update-rc.d apache2 enable
-  service apache2 start
+  case  "$SYSTEM_TYPE" in
+    ubuntu)
+      update-rc.d apache2 enable
+      service apache2 start
+      ;;
+    centos)
+      systemctl enable httpd
+      systemctl start httpd
+      ;;
+    *)
+      echo "Unknown system type $SYSTEM_TYPE"
+      exit 1
+      ;;
+  esac
 }

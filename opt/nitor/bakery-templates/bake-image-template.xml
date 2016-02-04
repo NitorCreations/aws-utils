@@ -20,18 +20,6 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
       <autoRebuild>false</autoRebuild>
       <rebuildDisabled>false</rebuildDisabled>
     </com.sonyericsson.rebuild.RebuildSettings>
-    <EnvInjectJobProperty plugin="envinject@1.92.1">
-      <info>
-        <propertiesContent>APP_USER={{app_user}}
-APP_HOME={{app_home}}</propertiesContent>
-        <loadFilesFromMaster>false</loadFilesFromMaster>
-      </info>
-      <on>true</on>
-      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
-      <keepBuildVariables>true</keepBuildVariables>
-      <overrideBuildParameters>false</overrideBuildParameters>
-      <contributors/>
-    </EnvInjectJobProperty>
   </properties>
   <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.1">
     <configVersion>2</configVersion>

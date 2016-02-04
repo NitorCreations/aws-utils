@@ -101,7 +101,7 @@ for imagebasedir in * ; do
   fi
 
   new_image_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
-  new_image_job_file="${new_job_conf%%::*}"
+  new_image_job_file="${new_image_job_conf%%::*}"
   new_image_job="${new_image_job_conf#*::}"
 
   for stackdir in "${imagebasedir}/stack-"* ; do

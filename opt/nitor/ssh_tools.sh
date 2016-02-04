@@ -26,5 +26,16 @@ ssh_install_hostkeys () {
 }
 
 ssh_restart_service () {
-  service ssh restart
+  case  "$SYSTEM_TYPE" in
+    ubuntu)
+      service ssh restart
+      ;;
+    centos)
+      systemctl restart sshd
+      ;;
+    *)
+      echo "Unknown system type $SYSTEM_TYPE"
+      exit 1
+      ;;
+  esac
 }

@@ -56,16 +56,30 @@ if [ -n "$1" ]; then
 else
   AMI="ami-e4ff5c93"
 fi
+if [ -n "$2" ]; then
+  IMAGETYPE="$2"
+else
+  IMAGETYPE="centos"
+fi
+if [ -n "$3" ]; then
+  SSH_USER="$3"
+else
+  SSH_USER="${IMAGETYPE}"
+fi
 if ! [ -r ./pre_install.sh ]; then
   echo -e "#!/bin/bash\n\nexit 0" > ./pre_install.sh
 fi
 if ! [ -r ./post_install.sh ]; then
   echo -e "#!/bin/bash\n\nexit 0" > ./post_install.sh
 fi
-touch ./packages.txt ./repos.txt ./keys.txt
+touch ./packages.txt
 PACKAGES="$($DIR/list-file-to-json.py packages ./packages.txt)"
-REPOS="$($DIR/list-file-to-json.py repos ./repos.txt)"
-KEYS="$($DIR/list-file-to-json.py keys ./keys.txt)"
+if [ "$IMAGETYPE" = "ubuntu" ]; then
+  touch ./repos.txt ./keys.txt
+  REPOS="$($DIR/list-file-to-json.py repos ./repos.txt)"
+  KEYS="$($DIR/list-file-to-json.py keys ./keys.txt)"
+  extra_args=( -e "$REPOS" -e "$KEYS" )
+fi
 
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
 NAME="${JOB}_$BUILD_NUMBER"
@@ -81,8 +95,10 @@ if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e tools_version=$AWSUTILS_VERSION -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
   -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
-  -e "$REPOS" -e "$KEYS" -e root_ami=$AMI -e tstamp=$TSTAMP \
+  "${extra_args[@]}" -e root_ami=$AMI -e tstamp=$TSTAMP \
+  -e aws_region=eu-west-1 -e ansible_ssh_user=$SSH_USER \
   -e workdir="$(pwd -P)"; then
+
   echo "AMI_ID=$(cat $WORKSPACE/ami-id.txt)" > $WORKSPACE/ami.properties
   echo "NAME=$(cat $WORKSPACE/name.txt)" >> $WORKSPACE/ami.properties
   echo "SUCCESS"
@@ -94,3 +110,5 @@ else
   cleanup
   exit 1
 fi
+
+

@@ -79,6 +79,8 @@ if [ "$IMAGETYPE" = "ubuntu" ]; then
   REPOS="$($DIR/list-file-to-json.py repos ./repos.txt)"
   KEYS="$($DIR/list-file-to-json.py keys ./keys.txt)"
   extra_args=( -e "$REPOS" -e "$KEYS" )
+else
+  extra_args=( -e '{"repos": []}' -e '{"keys": []}' )
 fi
 
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')

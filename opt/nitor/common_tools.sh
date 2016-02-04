@@ -30,4 +30,20 @@ check_parameters () {
 system_type() {
   (source /etc/os-release; echo $ID)
 }
+
+set_timezone() {
+  if [ -z "$tz" ]; then
+    tz=Europe/Helsinki
+  fi
+  ln -snf ../usr/share/zoneinfo/$tz /etc/localtime
+  [ ! -e /etc/timezone ] || echo $tz > /etc/timezone
+}
+
+set_hostname() {
+  if [ -n "${CF_paramDnsName}" ]; then
+    hostname ${CF_paramDnsName}
+    echo "${CF_paramDnsName}" > /etc/hostname
+  fi
+}
+
 SYSTEM_TYPE=$(system_type)

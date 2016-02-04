@@ -16,9 +16,21 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
+case  "$SYSTEM_TYPE" in
+  ubuntu)
+    APACHE_SSL_CONF=/etc/apache2/sites-enabled/default-ssl.conf
+    ;;
+  centos)
+    APACHE_SSL_CONF=/etc/httpd/conf.d/ssl.conf
+  *)
+    echo "Unknown system type $SYSTEM_TYPE"
+    exit 1
+    ;;
+esac
+
 apache_replace_domain_vars () {
   check_parameters APACHE_SSL_CONF CF_paramDnsName
-  perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g' ${APACHE_SSL_CONF}
+  perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g;s!%zone%!'"${CF_paramDnsName#*.}"'!g'  ${APACHE_SSL_CONF}
 }
 
 perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }
@@ -41,6 +53,49 @@ apache_install_certs () {
   else
     echo "Invalid parameter CF_paramUseLetsencrypt value '${CF_paramUseLetsencrypt}'"
     exit 1
+  fi
+}
+
+apache_prepare_ssl_conf() {
+  if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
+    a2enmod proxy
+    a2enmod proxy_http
+    a2enmod headers
+    a2enmod ssl
+    a2ensite default-ssl
+    a2dissite 000-default
+    sed -i -e 's/#.*$//' -e '/^$/d' -e '/<\/IfModule>/d' -e '/SSLProtocol/d' /etc/apache2/mods-enabled/ssl.conf
+    cat >> /etc/apache2/mods-enabled/ssl.conf << MARK
+  SSLProtocol all -SSLv2 -SSLv3
+</IfModule>
+MARK
+  fi
+  sed -i -e '/^#.*$/d' -e '/^$/d' -e '/<\/VirtualHost>/d' -e '/SSLCertificate/d' -e '/SSLCACertificate/d' -e '/SSLProtocol/d' -e '/SSLCipherSuite/d' ${APACHE_SSL_CONF}
+
+  if [ "$SYSTEM_TYPE" = "centos" ]; then
+    # Allow reverse proxy connections
+    setsebool -P httpd_can_network_connect 1
+  fi
+  mkdir /etc/certs
+  chmod 700 /etc/certs
+  cat >> ${APACHE_SSL_CONF} << MARK
+    ServerName https://%domain%
+    Alias /.well-known /var/www/%domain%/.well-known
+    SSLProtocol all -SSLv2 -SSLv3
+    SSLCipherSuite ALL:!DH:!EXPORT:!RC4:+HIGH:+MEDIUM:!LOW:!aNULL:!eNULL
+    SSLCertificateFile /etc/certs/%domain%.crt
+    SSLCertificateKeyFile /etc/certs/%domain%.key.clear
+    SSLCertificateChainFile /etc/certs/%zone%.chain
+    ProxyPass /.well-known !
+    ProxyPass / http://localhost:8080/
+    Header edit Location ^http://%domain% https://%domain%
+    ProxyRequests Off
+    ProxyPreserveHost On
+    ProxyTimeout 600
+  </VirtualHost>
+MARK
+  if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
+    echo '</IfModule>' >> ${APACHE_SSL_CONF}
   fi
 }
 

@@ -26,3 +26,8 @@ check_parameters () {
     exit 1
   fi
 }
+
+system_type() {
+  (source /etc/os-release; echo $ID)
+}
+SYSTEM_TYPE=$(system_type)

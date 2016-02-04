@@ -19,21 +19,21 @@ set -xe
 image="$1" ; shift
 stack="$1" ; shift
 AMI_ID="$1" ; shift
+imagejob="$1" ; shift
 
 source "infra.properties"
 [ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
 [ -e "${image}/stack-${stack}/infra.properties" ] && source "${image}/stack-${stack}/infra.properties"
 
 if [ ! "$AMI_ID" ]; then
-  AMI_ID="$(cat .prev-ami_id)"
+  AMI_ID="$(curl -fs "http://localhost:8080/job/${imagejob}/lastSuccessfulBuild/artifact/ami-id.txt")"
   if [ ! "$AMI_ID" ]; then
-    echo "AMI_ID job parameter not defined and previous value not found - aborting"
+    echo "AMI_ID job parameter not defined and value could not be determined from parent bake job - aborting"
     exit 1
   fi
-  echo "Using AMI_ID $AMI_ID from previous job execution"
+  echo "Using AMI_ID $AMI_ID from last successful bake"
 else
   echo "Using AMI_ID $AMI_ID given as job parameter"
-  echo "$AMI_ID" > .prev-ami_id
 fi
 
 aws-utils/cloudformation-update-stack.py "${stack}" "${image}/stack-${stack}/template.yaml" $AMI_ID

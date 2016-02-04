@@ -28,6 +28,9 @@ fi
 if [ -z "$PHANTOMJS_VERSION" ]; then
   PHANTOMJS_VERSION=2.1.1
 fi
+if [ -z "$NEXUS_VERSION" ]; then
+  NEXUS_VERSION=2.12.0-01
+fi
 
 install_lein() {
   wget -O /usr/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
@@ -53,6 +56,13 @@ install_maven() {
   wget -O - http://mirror.netinch.com/pub/apache/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | tar -xzvf - -C /opt/
   ln -snf /opt/apache-maven-$MAVEN_VERSION /opt/maven
   ln -snf  /opt/maven/bin/mvn /usr/bin/mvn
+}
+install_nexus() {
+  wget -O - https://sonatype-download.global.ssl.fastly.net/nexus/oss/nexus-$NEXUS_VERSION-bundle.tar.gz | tar -xzf - -C /opt/nexus
+  chown -R nexus:nexus /opt/nexus
+  ln -snf /opt/nexus/nexus-* /opt/nexus/current
+  wget -O /usr/lib/systemd/system/nexus.service https://raw.githubusercontent.com/NitorCreations/CoreComponents/master/files/nexus.service
+  sed -i 's/nexus-webapp-context-path=.*/nexus-webapp-context-path=\//' /opt/nexus/current/conf/nexus.properties
 }
 update_aws_utils () {
   echo "Updating aws-utils from version $(cat /opt/nitor/aws-utils.version) to $AWSUTILS_VERSION"

@@ -22,6 +22,7 @@ case  "$SYSTEM_TYPE" in
     ;;
   centos)
     APACHE_SSL_CONF=/etc/httpd/conf.d/ssl.conf
+    ;;
   *)
     echo "Unknown system type $SYSTEM_TYPE"
     exit 1

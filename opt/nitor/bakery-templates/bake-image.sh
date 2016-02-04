@@ -26,6 +26,7 @@ AMIID="${!VAR_AMIID}"
 
 # Bake
 cd ${image}/image
+export APP_HOME APP_USER
 $WORKSPACE/aws-utils/bake-ami.sh $AMIID
 
 echo "--------------------- Share to ${SHARE_REGIONS}"

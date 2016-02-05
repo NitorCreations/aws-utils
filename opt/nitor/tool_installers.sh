@@ -61,7 +61,22 @@ install_nexus() {
   wget -O - https://sonatype-download.global.ssl.fastly.net/nexus/oss/nexus-$NEXUS_VERSION-bundle.tar.gz | tar -xzf - -C /opt/nexus
   chown -R nexus:nexus /opt/nexus
   ln -snf /opt/nexus/nexus-* /opt/nexus/current
-  wget -O /usr/lib/systemd/system/nexus.service https://raw.githubusercontent.com/NitorCreations/CoreComponents/master/files/nexus.service
+  cat > /usr/lib/systemd/system/nexus.service << MARKER
+[Unit]
+Description=Sonatype Nexus
+
+[Service]
+Type=forking
+User=nexus
+PIDFile=/opt/nexus/current/bin/jsw/linux-x86-64/nexus.pid
+ExecStart=/opt/nexus/current/bin/nexus start
+ExecReload=/opt/nexus/current/bin/nexus restart
+ExecStop=/opt/nexus/current/bin/nexus stop
+
+[Install]
+Alias=nexus
+WantedBy=default.target
+MARKER
   sed -i 's/nexus-webapp-context-path=.*/nexus-webapp-context-path=\//' /opt/nexus/current/conf/nexus.properties
 }
 update_aws_utils () {

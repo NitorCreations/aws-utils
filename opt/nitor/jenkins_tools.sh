@@ -33,6 +33,14 @@ jenkins_mount_home () {
   chown jenkins:jenkins /var/lib/jenkins/jenkins-home
 }
 
+jenkins_mount_ebs_home () {
+  local SIZE=$1
+  if [ -z "$SIZE" ]; then
+    SIZE=32
+  fi
+  volume-from-snapshot.sh  ${CF_paramDnsName%%.*} ${CF_paramDnsName%%.*} /var/lib/jenkins/jenkins-home $SIZE
+}
+
 jenkins_setup_default_gitignore () {
   cat > /var/lib/jenkins-default/.gitignore << EOF
 *.csv
@@ -198,17 +206,50 @@ jenkins_improve_config_security () {
 }
 
 jenkins_set_home () {
-  sed -i 's/JENKINS_HOME=.*/JENKINS_HOME=\/var\/lib\/jenkins\/jenkins-home/g' /etc/default/jenkins
+  case "$SYSTEM_TYPE" in
+    ubuntu)
+      local SYSCONFIG=/etc/default/jenkins
+      ;;
+    centos|fedora)
+      local SYSCONFIG=/etc/sysconfig/jenkins
+      ;;
+    *)
+      echo "Unkown system type $SYSTEM_TYPE"
+      exit 1
+  esac
+  sed -i 's/JENKINS_HOME=.*/JENKINS_HOME=\/var\/lib\/jenkins\/jenkins-home/g' $SYSCONFIG
 }
 
 jenkins_disable_and_shutdown_service () {
-  update-rc.d jenkins disable
-  service jenkins stop
+  case "$SYSTEM_TYPE" in
+    ubuntu)
+      update-rc.d jenkins disable
+      service jenkins stop
+      ;;
+    centos|fedora)
+      systemctl disable jenkins
+      systemctl stop jenkins
+      ;;
+    *)
+      echo "Unkown system type $SYSTEM_TYPE"
+      exit 1
+  esac
 }
 
 jenkins_enable_and_start_service () {
-  update-rc.d jenkins enable
-  service jenkins start
+  case "$SYSTEM_TYPE" in
+    ubuntu)
+      update-rc.d jenkins enable
+      service jenkins start
+      ;;
+    centos|fedora)
+      systemctl enable jenkins
+      systemctl start jenkins
+      ;;
+    *)
+      echo "Unkown system type $SYSTEM_TYPE"
+      exit 1
+  esac
 }
 
 jenkins_wait_service_up () {

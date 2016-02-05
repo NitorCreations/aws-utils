@@ -19,7 +19,7 @@ if [ -z "$AWSUTILS_VERSION" ]; then
   if [ -n "${CF_paramAwsUtilsVersion}" ]; then
     AWSUTILS_VERSION="${CF_paramAwsUtilsVersion}"
   else
-    AWSUTILS_VERSION=0.15
+    AWSUTILS_VERSION=0.37
   fi
 fi
 if [ -z "$MAVEN_VERSION" ]; then

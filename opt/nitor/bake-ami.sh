@@ -38,7 +38,7 @@ else
   exit 1
 fi
 if [ -z "$AWSUTILS_VERSION" ]; then
-  AWSUTILS_VERSION=0.15
+  AWSUTILS_VERSION=0.37
 fi
 if [ -z "$BUILD_NUMBER" ]; then
   BUILD_NUMBER=$TSTAMP
@@ -114,5 +114,3 @@ else
   cleanup
   exit 1
 fi
-
-

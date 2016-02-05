@@ -96,14 +96,18 @@ def get_params(data):
 def import_scripts(data, basefile, path="", params=None):
     if (params is None):
         params = get_params(data)
-    if (not isinstance(data, collections.OrderedDict)):
-        return
-    for k,v in data.items():
-        import_scripts(v, basefile, path + k + "_", params)
-        if (k == "Fn::ImportFile"):
-            contents = import_script(resolve_file(v, basefile), params, basefile)
-            del data[k]
-            data['Fn::Join'] = [ "", contents ]
+    if (isinstance(data, collections.OrderedDict)):
+        for k,v in data.items():
+            import_scripts(v, basefile, path + k + "_", params)
+            if (k == "Fn::ImportFile"):
+                contents = import_script(resolve_file(v, basefile), params, basefile)
+                del data[k]
+                data['Fn::Join'] = [ "", contents ]
+    elif (isinstance(data, list)):
+        for i in range(0, len(data)):
+            v = data[i]
+            import_scripts(v, basefile, path + str(i) + "_", params)
+        
 
 ############################################################################
 # extract_scripts

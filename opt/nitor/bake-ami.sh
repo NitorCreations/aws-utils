@@ -84,6 +84,8 @@ else
 fi
 
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
+[ "${REGION}" ] || REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
+[ "${REGION}" ]
 NAME="${JOB}_$BUILD_NUMBER"
 AMI_TAG="$NAME"
 echo "$AMI_TAG" > $WORKSPACE/ami-tag.txt
@@ -98,7 +100,7 @@ if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
   "${extra_args[@]}" -e root_ami=$AMI -e tstamp=$TSTAMP \
-  -e aws_region=eu-west-1 -e ansible_ssh_user=$SSH_USER \
+  -e aws_region=$REGION -e ansible_ssh_user=$SSH_USER \
   -e workdir="$(pwd -P)"; then
 
   echo "AMI_ID=$(cat $WORKSPACE/ami-id.txt)" > $WORKSPACE/ami.properties

@@ -39,9 +39,9 @@ perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }
 apache_install_certs () {
   check_parameters APACHE_SSL_CONF CF_paramUseLetsencrypt CF_paramDnsName
   if [ "${CF_paramUseLetsencrypt}" = "true" ]; then
-    ln -sv /etc/letsencrypt/live/${CF_paramDnsName}/cert.pem    $(perlgrep '^\s*SSLCertificateFile'      ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    ln -sv /etc/letsencrypt/live/${CF_paramDnsName}/privkey.pem $(perlgrep '^\s*SSLCertificateKeyFile'   ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    ln -sv /etc/letsencrypt/live/${CF_paramDnsName}/chain.pem   $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/cert.pem    $(perlgrep '^\s*SSLCertificateFile'      ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/privkey.pem $(perlgrep '^\s*SSLCertificateKeyFile'   ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/chain.pem   $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
     # SSLCACertificateFile?
     /opt/letsencrypt/letsencrypt-auto --help
   elif [ "${CF_paramUseLetsencrypt}" = "false" ]; then
@@ -50,7 +50,7 @@ apache_install_certs () {
       perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
       echo /etc/certs/$DOMAIN.chain
     ) | sort -u | xargs /root/fetch-secrets.sh get 444
-    ln -sv /etc/certs/$DOMAIN.chain $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    ln -snfv /etc/certs/$DOMAIN.chain $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
   else
     echo "Invalid parameter CF_paramUseLetsencrypt value '${CF_paramUseLetsencrypt}'"
     exit 1

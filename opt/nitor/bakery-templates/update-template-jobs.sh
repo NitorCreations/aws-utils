@@ -106,6 +106,9 @@ for imagebasedir in * ; do
     continue
   fi
 
+  autostackjobnames=
+  allstackjobnames=
+
   new_image_job="$(set -e ; generate_job_name "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
 
   for stackdir in "${imagebasedir}/stack-"* ; do

@@ -25,12 +25,12 @@ jenkins_setup_dotssh () {
   ssh-keygen -y -f /var/lib/jenkins/.ssh/id_rsa > /var/lib/jenkins/.ssh/id_rsa.pub
   chmod 400 /var/lib/jenkins/.ssh/id_rsa.pub
   ssh-keyscan -t rsa github.com >> /var/lib/jenkins/.ssh/known_hosts
-  chown -R jenkins:jenkins /var/lib/jenkins/.ssh
+  chown -R jenkins:jenkins /var/lib/jenkins/
 }
 
 jenkins_mount_home () {
   encrypt-and-mount.sh /dev/xvdb /var/lib/jenkins/jenkins-home
-  chown jenkins:jenkins /var/lib/jenkins/jenkins-home
+  chown -R jenkins:jenkins /var/lib/jenkins/jenkins-home
 }
 
 jenkins_mount_ebs_home () {
@@ -63,12 +63,14 @@ secret.key
 secrets
 workspace
 EOF
-  chown jenkins:jenkins /var/lib/jenkins-default/.gitignore
+  chown -R jenkins:jenkins /var/lib/jenkins-default/
 }
 
 
 # optional parameters: CF_paramJenkinsGit
 jenkins_fetch_repo () {
+  chown -R jenkins:jenkins /var/lib/jenkins
+  chown -R jenkins:jenkins /var/lib/jenkins/jenkins-home
   sudo -iu jenkins git init /var/lib/jenkins/jenkins-home
   if [ "${CF_paramJenkinsGit}" ]; then
     echo "Using remote jenkins config git repo ${CF_paramJenkinsGit}"
@@ -130,7 +132,13 @@ EOF
 
 jenkins_setup_git_sync_on_shutdown () {
   # Amend service script to call sync_git right after stopping the service - original script saved as jenkins.orig
-  perl -i.orig -e 'while(<>){print;if(m!^(\s+)do_stop!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+  if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
+    perl -i.orig -e 'while(<>){print;if(m!^(\s+)do_stop!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+  elif [ "$SYSTEM_TYPE" = "centos" -o "$SYSTEM_TYPE" = "fedora" ]; then
+    perl -i.orig -e 'while(<>){print;if(m!^(\s+)killproc!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+  else
+    echo "Unkown system type $SYSTEM_TYPE"
+  fi
 }
 
 jenkins_setup_git_sync_job () {
@@ -202,6 +210,7 @@ jenkins_fetch_additional_files () {
 }
 
 jenkins_improve_config_security () {
+  mkdir -p /var/lib/jenkins/jenkins-home/secrets/
   echo false > /var/lib/jenkins/jenkins-home/secrets/slave-to-master-security-kill-switch
 }
 

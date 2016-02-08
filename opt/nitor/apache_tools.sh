@@ -50,7 +50,10 @@ apache_install_certs () {
       perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
       echo /etc/certs/$DOMAIN.chain
     ) | sort -u | xargs /root/fetch-secrets.sh get 444
-    ln -snfv /etc/certs/$DOMAIN.chain $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    CONF_CHAIN=$(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+    fi [ "$CONF_CHAIN" != "/etc/certs/$DOMAIN.chain" ]; then
+      ln -snfv /etc/certs/$DOMAIN.chain $CONF_CHAIN
+    fi
   else
     echo "Invalid parameter CF_paramUseLetsencrypt value '${CF_paramUseLetsencrypt}'"
     exit 1
@@ -77,7 +80,7 @@ MARK
     # Allow reverse proxy connections
     setsebool -P httpd_can_network_connect 1
   fi
-  mkdir /etc/certs
+  mkdir -p /etc/certs
   chmod 700 /etc/certs
   cat >> ${APACHE_SSL_CONF} << MARK
     ServerName https://%domain%

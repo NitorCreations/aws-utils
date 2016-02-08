@@ -120,15 +120,16 @@ for imagebasedir in * ; do
 	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!s; print $f;' "${new_job_file}"
       fi
       stackjobname="$(set -e ; create_or_update_job "$new_job" "$new_job_file")"
+      allstackjobnames="${allstackjobnames}${stackjobname},"
       if [ ! "${manual_deploy}" ]; then
-	stackjobnames="${stackjobnames}${stackjobname},"
+	autostackjobnames="${autostackjobnames}${stackjobname},"
       fi
     fi
   done
 
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    new_image_job_file="$(set -e ; generate_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+    new_image_job_file="$(set -e ; generate_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" autostackjobs="${autostackjobnames}" allstackjobs="${allstackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
     create_or_update_job "$new_image_job" "$new_image_job_file"
   fi
 done

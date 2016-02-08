@@ -92,6 +92,7 @@ MARK
     SSLCertificateChainFile /etc/certs/%zone%.chain
     ProxyPass /.well-known !
     ProxyPass / http://localhost:8080/
+    RequestHeader set X-Forwarded-Proto "https"
     Header edit Location ^http://%domain% https://%domain%
     ProxyRequests Off
     ProxyPreserveHost On

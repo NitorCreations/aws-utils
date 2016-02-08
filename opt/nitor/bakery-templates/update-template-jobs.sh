@@ -44,16 +44,22 @@ cli_get_job () {
   echo "${file}"
 }
 
-apply_job_template () {
+generate_job_name () {
   template_job="$1"
   shift
   echo "Creating job based on '$template_job' with parameters" "$@" >&2
   new_job="$(set -e ; echo "$template_job" | sed 's!^TEMPLATE !!' | apply_parameters "$@")"
   echo "Job name: '$new_job'" >&2
+  echo "${new_job}"
+}
+
+generate_job_from_template () {
+  template_job="$1"
+  shift
   template_job_file="$(set -e ; cli_get_job "$template_job")"
   new_job_file="$(set -e ; mktemp -p "${cli_cache}" job_XXXXXXXX.xml)"
   apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
-  echo "${new_job_file}::${new_job}"
+  echo "${new_job_file}"
 }
 
 create_or_update_job () {
@@ -100,18 +106,15 @@ for imagebasedir in * ; do
     continue
   fi
 
-  new_image_job_conf="$(set -e ; apply_job_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
-  new_image_job_file="${new_image_job_conf%%::*}"
-  new_image_job="${new_image_job_conf#*::}"
+  new_image_job="$(set -e ; generate_job_name "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
 
   for stackdir in "${imagebasedir}/stack-"* ; do
     if [ -d "${stackdir}" ]; then
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
       manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackdir}")"
-      new_job_conf="$(set -e ; apply_job_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" imagejob="${new_image_job}")"
-      new_job_file="${new_job_conf%%::*}"
-      new_job="${new_job_conf#*::}"
+      new_job="$(     set -e ; generate_job_name          "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" imagejob="${new_image_job}")"
+      new_job_file="$(set -e ; generate_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" imagejob="${new_image_job}")"
       if [ "${manual_deploy}" ]; then
 	# disable job triggers
 	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!s; print $f;' "${new_job_file}"
@@ -125,6 +128,7 @@ for imagebasedir in * ; do
 
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
+    new_image_job_file="$(set -e ; generate_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" stackjobs="${stackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
     create_or_update_job "$new_image_job" "$new_image_job_file"
   fi
 done

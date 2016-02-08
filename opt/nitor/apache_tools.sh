@@ -51,7 +51,7 @@ apache_install_certs () {
       echo /etc/certs/$DOMAIN.chain
     ) | sort -u | xargs /root/fetch-secrets.sh get 444
     CONF_CHAIN=$(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    fi [ "$CONF_CHAIN" != "/etc/certs/$DOMAIN.chain" ]; then
+    if [ "$CONF_CHAIN" != "/etc/certs/$DOMAIN.chain" ]; then
       ln -snfv /etc/certs/$DOMAIN.chain $CONF_CHAIN
     fi
   else

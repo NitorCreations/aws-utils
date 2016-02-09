@@ -91,23 +91,69 @@ def get_params(data):
     params.add("AWS::StackId")
     params.add("AWS::StackName")
     return params
-        
-# data argument is mutated
+
+PARAM_REF_RE = re.compile(r'\(\(([^)]+)\)\)')
+
+# replaces "((param))" references in `data` with values from `params` argument. Param references with no association in `params` are left as-is.
+def apply_params(data, params):
+    if (isinstance(data, collections.OrderedDict)):
+        for k,v in data.items():
+            k2 = apply_params(k, params)
+            v2 = apply_params(v, params)
+            if (k != k2):
+                del data[k]
+            data[k2] = v2
+    elif (isinstance(data, list)):
+        for i in range(0, len(data)):
+            data[i] = apply_params(data[i], params)
+    elif (isinstance(data, str)):
+        prevEnd = None
+        res = ''
+        for m in PARAM_REF_RE.finditer(data):
+            k = m.group(1)
+            if (k in params):
+                span = m.span()
+                res += data[prevEnd:span[0]]
+                res += params[k]
+                prevEnd = span[1];
+        data = res + data[prevEnd:]
+    return data
+
+# returns new data
 def import_scripts(data, basefile, path="", params=None):
     if (params is None):
         params = get_params(data)
     if (isinstance(data, collections.OrderedDict)):
-        for k,v in data.items():
-            import_scripts(v, basefile, path + k + "_", params)
-            if (k == "Fn::ImportFile"):
-                contents = import_script(resolve_file(v, basefile), params, basefile)
-                del data[k]
-                data['Fn::Join'] = [ "", contents ]
+        if ('Fn::ImportFile' in data):
+            v = data['Fn::ImportFile']
+            data.clear()
+            contents = import_script(resolve_file(v, basefile), params, basefile)
+            data['Fn::Join'] = [ "", contents ]
+        elif ('Fn::ImportYaml' in data):
+            v = data['Fn::ImportYaml']
+            del data['Fn::ImportYaml']
+            file = resolve_file(v, basefile)
+            contents = yaml_load(open(file))
+            contents = apply_params(contents, data)
+            data.clear()
+            if (isinstance(contents, collections.OrderedDict)):
+                for k,v in contents.items():
+                    data[k] = import_scripts(v, file, path + k + "_", params)
+            elif (isinstance(contents, list)):
+                data = contents
+                for i in range(0, len(data)):
+                    data[i] = import_scripts(data[i], file, path + str(i) + "_", params)
+            else:
+                print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array")
+                sys.exit(1)
+        else:
+            for k,v in data.items():
+                data[k] = import_scripts(v, basefile, path + k + "_", params)
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            v = data[i]
-            import_scripts(v, basefile, path + str(i) + "_", params)
-        
+            data[i] = import_scripts(data[i], basefile, path + str(i) + "_", params)
+    return data
+
 
 ############################################################################
 # extract_scripts
@@ -179,7 +225,7 @@ def extract_scripts(data, prefix, path=""):
 
 def yaml_to_json(yaml_file_to_convert):
     data = yaml_load(open(yaml_file_to_convert))
-    import_scripts(data, yaml_file_to_convert)
+    data = import_scripts(data, yaml_file_to_convert)
     patch_launchconf_userdata_with_metadata_hash_and_params(data)
     return json_save(data)
 

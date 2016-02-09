@@ -66,7 +66,7 @@ def deploy(stack_names, yaml_templates, ami_id):
         # Load yaml template and import scripts and patch userdata with metadata hash & params
 
         template_doc = aws_infra_util.yaml_load(open(yaml_template))
-        aws_infra_util.import_scripts(template_doc, yaml_template)
+        template_doc = aws_infra_util.import_scripts(template_doc, yaml_template)
         aws_infra_util.patch_launchconf_userdata_with_metadata_hash_and_params(template_doc)
 
         if "Parameters" not in template_doc:

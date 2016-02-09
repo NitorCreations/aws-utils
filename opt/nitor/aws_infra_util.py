@@ -118,6 +118,8 @@ def apply_params(data, params):
             k = m.group(1)
             if (k in params):
                 span = m.span()
+                if (span[0] == 0 and span[1] == len(data)): # support non-string values only when value contains nothing but the reference
+                    return params[k]
                 res += data[prevEnd:span[0]]
                 res += params[k]
                 prevEnd = span[1];

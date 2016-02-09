@@ -21,3 +21,4 @@ if [ ! "$host" -o "$host" = "--help" ]; then
    exit 10
 fi
 create-shell-archive.sh /etc/ssh/ssh_host_* > ${host}-ssh-hostkeys.sh 
+chmod og= ${host}-ssh-hostkeys.sh

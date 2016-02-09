@@ -24,7 +24,7 @@ aws_ec2_associate_address () {
   check_parameters CF_AWS__Region INSTANCE_ID
   if [ ! "$CF_paramEipAllocationId" ]; then
     if [ "${CF_paramEip}" ]; then
-      CF_paramEipAllocationId="$(set -e ; aws --region eu-west-1 ec2 describe-addresses --public-ips "${CF_paramEip}" | jq -r '.Addresses[0].AllocationId')"
+      CF_paramEipAllocationId="$(set -e ; aws --region ${CF_AWS__Region} ec2 describe-addresses --public-ips "${CF_paramEip}" | jq -r '.Addresses[0].AllocationId')"
     fi
   fi
   if [ ! "$CF_paramEipAllocationId" ]; then

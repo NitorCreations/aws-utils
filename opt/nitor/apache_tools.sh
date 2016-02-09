@@ -128,6 +128,8 @@ apache_enable_and_start_service () {
       service apache2 start
       ;;
     centos)
+      firewall-cmd --permanent --zone=public --add-service=https
+      firewall-cmd --reload
       systemctl enable httpd
       systemctl start httpd
       ;;

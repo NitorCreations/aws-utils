@@ -80,7 +80,12 @@ def import_script(filename, params, template):
     return arr
 
 def resolve_file(file, basefile):
-    return os.path.dirname(basefile) + "/" + file
+    if (file[0] == "/"):
+        return file
+    base = os.path.dirname(basefile)
+    if (len(base) == 0):
+        base = "."
+    return base + "/" + file
 
 def get_params(data):
     params = set(data['Parameters'].iterkeys()) if ("Parameters" in data) else set()

@@ -68,8 +68,8 @@ def import_script(filename, params, template):
                 bashVarName = result.group(1)
                 varName = bash_decode_parameter_name(bashVarName)
                 if (not varName in params):
-                    print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + template);
-                    sys.exit(1);
+                    print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + template)
+                    sys.exit(1)
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
                 arr.append(line[0:result.end()] + "'")

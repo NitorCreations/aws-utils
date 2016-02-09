@@ -28,7 +28,7 @@ AMIID="${!VAR_AMIID}"
 cd ${image}/image
 export APP_HOME APP_USER
 SSH_USER=$IMAGETYPE
-$WORKSPACE/aws-utils/bake-ami.sh $AMIID $IMAGETYPE $SSH_USER
+$WORKSPACE/aws-utils/bake-ami.sh $AMIID $IMAGETYPE $SSH_USER ../../fetch-secrets.sh
 
 echo "--------------------- Share to ${SHARE_REGIONS}"
 for region in ${SHARE_REGIONS//,/ } ; do

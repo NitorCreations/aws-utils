@@ -66,6 +66,11 @@ if [ -n "$3" ]; then
 else
   SSH_USER="${IMAGETYPE}"
 fi
+if [ -n "$4" ]; then
+  FETCH_SECRETS="$4"
+else
+  FETCH_SECRETS="/dev/null"
+fi
 if ! [ -r ./pre_install.sh ]; then
   echo -e "#!/bin/bash\n\nexit 0" > ./pre_install.sh
 fi

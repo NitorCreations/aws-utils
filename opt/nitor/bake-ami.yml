@@ -68,6 +68,7 @@
          shell: /sbin/nologin
          home: "{{ app_home }}"
          createhome: yes
+     - copy: src="{{ workdir }}/fetch-secrets.sh" dest=/root/fetch-secrets.sh owner=root group=root mode=0700
      - script: "{{ workdir }}/pre_install.sh"
      - apt_key: url="{{ item }}" state=present
        with_items: "{{ keys }}"

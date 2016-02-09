@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # @param type record type e.g. A or CNAME
-# @param recs the records
+# @param rec the record value
 Type: AWS::Route53::RecordSetGroup
 Properties:
   HostedZoneName: {Ref: paramHostedZoneName}

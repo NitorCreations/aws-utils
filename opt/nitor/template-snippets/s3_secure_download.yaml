@@ -19,4 +19,4 @@ PolicyDocument:
   Statement:
   - Effect: Allow
     Action: ['s3:Get*', 's3:List*']
-    Resource: [ '((resource))' ]
+    Resource: {'Fn::Join': [ "", ['arn:aws:s3:::', '((bucket))', '/*']]}

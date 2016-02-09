@@ -106,7 +106,7 @@ if ansible-playbook -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
   "${extra_args[@]}" -e root_ami=$AMI -e tstamp=$TSTAMP \
   -e aws_region=$REGION -e ansible_ssh_user=$SSH_USER \
-  -e workdir="$(pwd -P)"; then
+  -e workdir="$(pwd -P)" -e fetch_secrets=$FETCH_SECRETS ; then
 
   echo "AMI_ID=$(cat $WORKSPACE/ami-id.txt)" > $WORKSPACE/ami.properties
   echo "NAME=$(cat $WORKSPACE/name.txt)" >> $WORKSPACE/ami.properties

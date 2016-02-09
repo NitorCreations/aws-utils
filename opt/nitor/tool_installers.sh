@@ -79,6 +79,19 @@ WantedBy=default.target
 MARKER
   sed -i 's/nexus-webapp-context-path=.*/nexus-webapp-context-path=\//' /opt/nexus/current/conf/nexus.properties
 }
+install_fail2ban() {
+  yum update -y selinux-policy*
+  cat > /etc/fail2ban/jail.d/sshd.local << MARKER
+[sshd]
+enabled = true
+port = ssh
+logpath = %(sshd_log)s
+maxretry = 5
+bantime = 86400
+MARKER
+  systemctl enable fail2ban
+  systemctl start fail2ban
+}
 update_aws_utils () {
   echo "Updating aws-utils from version $(cat /opt/nitor/aws-utils.version) to $AWSUTILS_VERSION"
   bash "$(dirname "${BASH_SOURCE[0]}")/install_tools.sh" "${AWSUTILS_VERSION}"

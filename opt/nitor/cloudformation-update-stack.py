@@ -26,6 +26,9 @@ def deploy(stack_names, yaml_templates, ami_id):
     stack_names = stack_names.split(",")
     yaml_templates = yaml_templates.split(",")
 
+    # Disable buffering, from http://stackoverflow.com/questions/107705/disable-output-buffering
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
     # Assume amibakery role
 
     p = subprocess.Popen(['aws', 'sts', 'assume-role', '--role-arn', 'arn:aws:iam::832585949989:role/amibakery', '--role-session-name', 'amibakery-deploy'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)

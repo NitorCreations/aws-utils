@@ -151,7 +151,7 @@ def deploy(stack_names, yaml_templates, ami_id):
             ['aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
 
         print("Waiting for update to complete:")
-        while (true):
+        while (True):
             p = subprocess.Popen(update_stack_command,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
                                  env=dict(os.environ,

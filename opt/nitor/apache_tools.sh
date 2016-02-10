@@ -40,7 +40,7 @@ apache_install_certs () {
   check_parameters APACHE_SSL_CONF CF_paramUseLetsencrypt CF_paramDnsName
   if [ "${CF_paramUseLetsencrypt}" = "true" ]; then
     check_parameters CF_paramAdminEmail
-    generate-dummy-certs.sh
+    generate-dummy-certs.sh ${CF_paramDnsName}
     apache_enable_and_start_service
     WEBROOT=/var/www/${CF_paramDnsName}
     mkdir -p $WEBROOT/.well-known
@@ -51,6 +51,7 @@ apache_install_certs () {
     cat >> /etc/cron.d/renew-letsencrypt << MARKER
 14 4 * * *   root /usr/bin/renew-letsencrypt.sh "${CF_paramDnsName}" "${CF_paramAdminEmail}" >> /var/log/renew-letsencrypt.log 2>&1
 MARKER
+    apache_reload_service
   elif [ "${CF_paramUseLetsencrypt}" = "false" ]; then
     DOMAIN=${CF_paramDnsName#*.}
     (

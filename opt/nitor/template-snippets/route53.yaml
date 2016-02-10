@@ -14,6 +14,8 @@
 
 # @param type record type e.g. A or CNAME
 # @param rec the record value
+# Ref: paramHostedZoneName
+# Ref: paramDnsName
 Type: AWS::Route53::RecordSetGroup
 Properties:
   HostedZoneName: {Ref: paramHostedZoneName}

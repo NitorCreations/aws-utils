@@ -23,4 +23,4 @@ Properties:
       Action: sts:AssumeRole
   Path: /
   Policies:
-  - { 'Fn::ImportYaml': ../../aws-utils/template-snippets/policy_s3_secure_download.yaml, bucket: {Ref: paramSecretsBucket}, file: '*' }
+  - { 'Fn::ImportYaml': policy_s3_secure_download.yaml, bucket: {Ref: paramSecretsBucket}, file: '*' }

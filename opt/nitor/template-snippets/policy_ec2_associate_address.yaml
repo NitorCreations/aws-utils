@@ -17,6 +17,8 @@ PolicyDocument:
   Version: '2012-10-17'
   Statement:
   - Effect: Allow
-    Action: [ 'ec2:AssociateAddress', 'ec2:DescribeAddresses' ]
     Resource: '*'
+    Action:
+    - 'ec2:AssociateAddress'
+    - 'ec2:DescribeAddresses'
 # ec2:DescribeAddresses needed to resolve association-id from public-ip

@@ -20,6 +20,7 @@ import aws_infra_util
 import os
 import tempfile
 import collections
+import time
 
 def deploy(stack_names, yaml_templates, ami_id):
     stack_names = stack_names.split(",")
@@ -143,6 +144,33 @@ def deploy(stack_names, yaml_templates, ami_id):
             sys.exit("Update stack failed: " + output[1])
 
         print(output[0])
+
+        # Wait for update to complete
+
+        check_stack_command = \
+            ['aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
+
+        print("Waiting for update to complete:")
+        while (true):
+            p = subprocess.Popen(update_stack_command,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                                 env=dict(os.environ,
+                                          AWS_ACCESS_KEY_ID=aws_access_key_id,
+                                          AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
+                                          AWS_SESSION_TOKEN=aws_session_token))
+            output = p.communicate()
+            if p.returncode:
+                sys.exit("Describe stack failed: " + output[1])
+
+            stack_info = aws_infra_util.json_load(output[0])
+            status = stack_info['Stacks'][0]['StackStatus']
+            print("Status: " + status)
+            if (not status.endswith("_IN_PROGRESS")):
+                break
+
+            time.sleep(5)
+
+        print("Done!")
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:

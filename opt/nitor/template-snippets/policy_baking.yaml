@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Ref: resourceBakeRole
 PolicyName: allowBaking
 PolicyDocument:
   Version: '2012-10-17'
@@ -27,5 +28,5 @@ PolicyDocument:
     Action: 'iam:PassRole'
     Resource:
       Fn::GetAtt:
-      - resourceBakeRole
+      - {Ref: resourceBakeRole}
       - Arn

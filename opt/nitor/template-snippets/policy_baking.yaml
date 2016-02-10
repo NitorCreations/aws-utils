@@ -36,6 +36,6 @@ PolicyDocument:
     - 'sts:AssumeRole'
     - 'ec2:DescribeVpcs'
   - Effect: Allow
-    Resource: {'Fn::GetAtt': [ {Ref: resourceBakeRole}, Arn ]}
+    Resource: {'Fn::GetAtt': [ resourceBakeRole, Arn ]}
     Action:
     - 'iam:PassRole'

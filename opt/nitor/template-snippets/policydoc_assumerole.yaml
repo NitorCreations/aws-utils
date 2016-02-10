@@ -12,10 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Ref: paramSecretsBucket
-Type: AWS::IAM::Role
-Properties:
-  AssumeRolePolicyDocument: { 'Fn::ImportYaml': policydoc_assumerole.yaml }
-  Path: /
-  Policies:
-  - { 'Fn::ImportYaml': policy_s3_secure_download.yaml, bucket: {Ref: paramSecretsBucket}, file: '*' }
+Version: '2012-10-17'
+Statement:
+- Effect: Allow
+  Principal: {Service: ec2.amazonaws.com}
+  Action: sts:AssumeRole

@@ -20,7 +20,7 @@ case  "$SYSTEM_TYPE" in
   ubuntu)
     APACHE_SSL_CONF=/etc/apache2/sites-enabled/default-ssl.conf
     ;;
-  centos)
+  centos|fedora)
     APACHE_SSL_CONF=/etc/httpd/conf.d/ssl.conf
     ;;
   *)
@@ -39,11 +39,18 @@ perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }
 apache_install_certs () {
   check_parameters APACHE_SSL_CONF CF_paramUseLetsencrypt CF_paramDnsName
   if [ "${CF_paramUseLetsencrypt}" = "true" ]; then
+    check_parameters CF_paramAdminEmail
+    generate-dummy-certs.sh
+    apache_enable_and_start_service
+    WEBROOT=/var/www/${CF_paramDnsName}
+    mkdir -p $WEBROOT/.well-known
+    /opt/letsencrypt/letsencrypt-auto certonly --webroot -w $WEBROOT --agree-tos --email "${CF_paramAdminEmail}" -d "${CF_paramDnsName}"
     ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/cert.pem    $(perlgrep '^\s*SSLCertificateFile'      ${APACHE_SSL_CONF} | awk '{ print $2 }')
     ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/privkey.pem $(perlgrep '^\s*SSLCertificateKeyFile'   ${APACHE_SSL_CONF} | awk '{ print $2 }')
     ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/chain.pem   $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    # SSLCACertificateFile?
-    /opt/letsencrypt/letsencrypt-auto --help
+    cat >> /etc/cron.d/renew-letsencrypt << MARKER
+14 4 * * *   root /usr/bin/renew-letsencrypt.sh "${CF_paramDnsName}" "${CF_paramAdminEmail}" >> /var/log/renew-letsencrypt.log 2>&1
+MARKER
   elif [ "${CF_paramUseLetsencrypt}" = "false" ]; then
     DOMAIN=${CF_paramDnsName#*.}
     (
@@ -83,21 +90,27 @@ MARK
   mkdir -p /etc/certs
   chmod 700 /etc/certs
   cat >> ${APACHE_SSL_CONF} << MARK
-    ServerName https://%domain%
-    Alias /.well-known /var/www/%domain%/.well-known
-    SSLProtocol all -SSLv2 -SSLv3
-    SSLCipherSuite ALL:!DH:!EXPORT:!RC4:+HIGH:+MEDIUM:!LOW:!aNULL:!eNULL
-    SSLCertificateFile /etc/certs/%domain%.crt
-    SSLCertificateKeyFile /etc/certs/%domain%.key.clear
-    SSLCertificateChainFile /etc/certs/%zone%.chain
-    ProxyPass /.well-known !
-    ProxyPass / http://localhost:8080/
-    RequestHeader set X-Forwarded-Proto "https"
-    Header edit Location ^http://%domain% https://%domain%
-    ProxyRequests Off
-    ProxyPreserveHost On
-    ProxyTimeout 600
-  </VirtualHost>
+  ServerName https://%domain%
+  Alias /.well-known /var/www/%domain%/.well-known
+  SSLProtocol all -SSLv2 -SSLv3
+  SSLCipherSuite ALL:!DH:!EXPORT:!RC4:+HIGH:+MEDIUM:!LOW:!aNULL:!eNULL
+  SSLCertificateFile /etc/certs/%domain%.crt
+  SSLCertificateKeyFile /etc/certs/%domain%.key.clear
+  SSLCertificateChainFile /etc/certs/%zone%.chain
+  ProxyPass /.well-known !
+  ProxyPass / http://localhost:8080/
+  RequestHeader set X-Forwarded-Proto "https"
+  Header edit Location ^http://%domain% https://%domain%
+  ProxyRequests Off
+  ProxyPreserveHost On
+  ProxyTimeout 600
+</VirtualHost>
+
+NameVirtualHost *:80
+<VirtualHost *:80>
+   ServerName %domain%
+   Redirect permanent / https://%domain%/
+</VirtualHost>
 MARK
   if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
     echo '</IfModule>' >> ${APACHE_SSL_CONF}
@@ -110,9 +123,23 @@ apache_disable_and_shutdown_service () {
       update-rc.d apache2 disable
       service apache2 stop
       ;;
-    centos)
+    centos|fedora)
       systemctl disable httpd
       systemctl stop httpd
+      ;;
+    *)
+      echo "Unknown system type $SYSTEM_TYPE"
+      exit 1
+      ;;
+  esac
+}
+apache_reload_service () {
+  case  "$SYSTEM_TYPE" in
+    ubuntu)
+      service apache2 reload
+      ;;
+    centos|fedora)
+      systemctl reload httpd
       ;;
     *)
       echo "Unknown system type $SYSTEM_TYPE"
@@ -127,8 +154,9 @@ apache_enable_and_start_service () {
       update-rc.d apache2 enable
       service apache2 start
       ;;
-    centos)
+    centos|fedora)
       firewall-cmd --permanent --zone=public --add-service=https
+      firewall-cmd --permanent --zone=public --add-service=http
       firewall-cmd --reload
       systemctl enable httpd
       systemctl start httpd

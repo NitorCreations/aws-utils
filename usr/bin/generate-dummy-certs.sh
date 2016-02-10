@@ -14,28 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TSTAMP=$(date +%Y%m%d%H%M%S)
+if [ -z "$1" ]; then
+  echo "usage: $0 <domain>"
+  exit 1
+fi
+
 SERIAL=$(date +%s)
-mkdir -p /etc/letsencrypt/keys/$1/
-mkdir -p /etc/letsencrypt/live/$1/
-chmod -R 755 /etc/letsencrypt
+CA_KEY=/etc/certs/${1#*.}.key
+CA_CHAIN=/etc/certs/${1#*.}.chain
+CRT_KEY=/etc/certs/${1}.key.clear
+CSR_PEM=/etc/certs/${1}.csr
+CRT_PEM=/etc/certs/${1}.crt
+
+mkdir -p /etc/certs
 # CA cert
 openssl req -x509 -nodes -days 365 -newkey rsa:4096 -sha256 \
--keyout /etc/letsencrypt/keys/$1/chainkey-$TSTAMP.pem \
--out /etc/letsencrypt/keys/$1/chain-$TSTAMP.pem \
+-keyout $CA_KEY -out $CA_CHAIN \
 -subj "/C=FI/ST=Uusimaa/L=Helsinki/O=Nitor Creations Oy/OU=IT/CN=$1"
+
 # CSR
 openssl req -nodes -days 365 -newkey rsa:4096 -sha256 \
--keyout /etc/letsencrypt/keys/$1/privkey-$TSTAMP.pem \
--out /etc/letsencrypt/keys/$1/certcsr-$TSTAMP.pem \
+-keyout $CRT_KEY -out $CSR_PEM \
 -subj "/C=FI/ST=Uusimaa/L=Helsinki/O=Nitor Creations Oy/OU=IT/CN=$1"
+
 # Cert
-openssl x509 -req -in /etc/letsencrypt/keys/$1/certcsr-$TSTAMP.pem \
--CA /etc/letsencrypt/keys/$1/chain-$TSTAMP.pem \
--CAkey /etc/letsencrypt/keys/$1/chainkey-$TSTAMP.pem \
--set_serial $SERIAL \
--out /etc/letsencrypt/keys/$1/cert-$TSTAMP.pem
-# Symlink into place
-ln -snf /etc/letsencrypt/keys/$1/chain-$TSTAMP.pem /etc/letsencrypt/live/$1/chain.pem
-ln -snf /etc/letsencrypt/keys/$1/cert-$TSTAMP.pem /etc/letsencrypt/live/$1/cert.pem
-ln -snf /etc/letsencrypt/keys/$1/privkey-$TSTAMP.pem /etc/letsencrypt/live/$1/privkey.pem
+openssl x509 -req -in $CSR_PEM -CA $CA_CHAIN -CAkey $CA_KEY \
+-set_serial $SERIAL -out $CRT_PEM

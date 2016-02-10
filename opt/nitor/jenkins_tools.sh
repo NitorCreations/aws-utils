@@ -264,9 +264,10 @@ jenkins_enable_and_start_service () {
 jenkins_wait_service_up () {
   # Tests to see if everything is OK
   COUNT=0
+  SERVER=""
   while [ $COUNT -lt 300 ] && [ "$SERVER" != "Jenkins" ]; do
     sleep 1
-    SERVER=$(curl -Ls http://localhost:8080 | grep -o Jenkins | head -1)
+    SERVER="$(curl -Ls http://localhost:8080 | egrep -o "Jenkins|getting ready" |sort -ru| tr -d '\n')"
     COUNT=$(($COUNT + 1))
   done
   if [ "$SERVER" != "Jenkins" ]; then

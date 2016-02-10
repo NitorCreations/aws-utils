@@ -70,7 +70,7 @@ def deploy(stack_names, yaml_templates, ami_id):
         aws_infra_util.patch_launchconf_userdata_with_metadata_hash_and_params(template_doc)
 
         if "Parameters" not in template_doc:
-            template_doc['Parameters'] = [];
+            template_doc['Parameters'] = []
         template_parameters = template_doc['Parameters']
         if (not "paramAmiName" in template_parameters):
             template_parameters['paramAmiName']    = collections.OrderedDict([("Description", "AMI Name"), ("Type", "String"), ("Default", "")])
@@ -79,9 +79,9 @@ def deploy(stack_names, yaml_templates, ami_id):
 
         json_template = aws_infra_util.json_save(template_doc)
 
-        print("** Final template:");
-        print(json_template);
-        print("");
+        print("** Final template:")
+        print(json_template)
+        print("")
 
         # Load previous stack information to know which parameters have been deployed before
 
@@ -95,8 +95,8 @@ def deploy(stack_names, yaml_templates, ami_id):
                                       AWS_SESSION_TOKEN=aws_session_token))
         output = p.communicate()
         if p.returncode:
-            print("Failed to retrieve old stack for " + stack_name + " - assuming first deployment: " + output[1]);
-            sys.exit("Not implemented - should probably call create-stack instead of update-stack");
+            print("Failed to retrieve old stack for " + stack_name + " - assuming first deployment: " + output[1])
+            sys.exit("Not implemented - should probably call create-stack instead of update-stack")
 
         previous_stack = aws_infra_util.json_load(output[0])
         print("Result: " + aws_infra_util.json_save(previous_stack))

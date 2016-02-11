@@ -156,6 +156,8 @@ apache_enable_and_start_service () {
       service apache2 start
       ;;
     centos|fedora)
+      systemctl enable firewalld
+      systemctl start firewalld
       firewall-cmd --permanent --zone=public --add-service=https
       firewall-cmd --permanent --zone=public --add-service=http
       firewall-cmd --reload

@@ -68,7 +68,7 @@
         shell: /sbin/nologin
         home: "{{ app_home }}"
         createhome: yes
-    - shell: nohup shutdown -P +300 &
+    - shell: bash -c 'sleep 5h ; shutdown -P +15' &
     - copy: src="{{ workdir }}/{{ fetch_secrets }}" dest=/root/fetch-secrets.sh owner=root group=root mode=0700
     - script: "{{ workdir }}/pre_install.sh"
     - apt_key: url="{{ item }}" state=present

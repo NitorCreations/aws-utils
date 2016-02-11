@@ -21,6 +21,7 @@ import os
 import tempfile
 import collections
 import time
+import datetime
 
 def deploy(stack_names, yaml_templates, ami_id):
     stack_names = stack_names.split(",")
@@ -134,6 +135,8 @@ def deploy(stack_names, yaml_templates, ami_id):
             if "paramAmi" not in key and key != 'paramAwsUtilsVersion' and key in previous_stack_parameters:
                 update_stack_command.append('ParameterKey='+key+',UsePreviousValue=true')
 
+        currentTimeInCloudWatchFormat = datetime.datetime.now().strftime("%FT%H%%253A%M%%253A%SZ")
+
         print("Updating stack: " + str(update_stack_command))
         p = subprocess.Popen(update_stack_command,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
@@ -152,6 +155,9 @@ def deploy(stack_names, yaml_templates, ami_id):
 
         check_stack_command = \
             ['aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
+
+        cloudWatchNotice = "\nCloudWatch url:  https://console.aws.amazon.com/cloudwatch/home#logEvent:group=instanceDeployment;stream=" + stack_name + ";start=" + currentTimeInCloudWatchFormat + "\n"
+        print(cloudWatchNotice)
 
         print("Waiting for update to complete:")
         while (True):
@@ -173,8 +179,10 @@ def deploy(stack_names, yaml_templates, ami_id):
 
             time.sleep(5)
 
+        print(cloudWatchNotice)
+
         if (status != "UPDATE_COMPLETE"):
-            sys.exit("Update stack failed: end state " + status);
+            sys.exit("Update stack failed: end state " + status)
 
         print("Done!")
 

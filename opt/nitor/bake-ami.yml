@@ -129,10 +129,10 @@
         count_tag:     { "environment": "nitor", "Name": "{{ job_name }} prototype" }
         exact_count: 0
         instance_type: t2.medium
-        image: ami-e4ff5c93
+        image: "{{ root_ami }}"
         vpc_subnet_id: subnet-4c0e0338
         assign_public_ip: yes
-        group: sg-6f67950b
+        group_id: sg-6f67950b
         monitoring: no
         key_name: "{{ aws_key_name }}"
         wait: no

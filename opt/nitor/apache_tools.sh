@@ -44,7 +44,12 @@ apache_install_certs () {
     apache_enable_and_start_service
     WEBROOT=/var/www/${CF_paramDnsName}
     mkdir -p $WEBROOT/.well-known
-    /opt/letsencrypt/letsencrypt-auto certonly --webroot -w $WEBROOT --agree-tos --email "${CF_paramAdminEmail}" -d "${CF_paramDnsName}"
+    RETRIES=0
+    while ! /opt/letsencrypt/letsencrypt-auto certonly --webroot -w $WEBROOT --agree-tos --email "${CF_paramAdminEmail}" -d "${CF_paramDnsName}" &&  [ $RETRIES -lt 5 ]; do
+      RETRIES=$(($RETRIES + 1))
+      echo "Failed to get certs - retrying ($RETRIES)"
+      sleep 10
+    done
     ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/cert.pem    $(perlgrep '^\s*SSLCertificateFile'      ${APACHE_SSL_CONF} | awk '{ print $2 }')
     ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/privkey.pem $(perlgrep '^\s*SSLCertificateKeyFile'   ${APACHE_SSL_CONF} | awk '{ print $2 }')
     ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/chain.pem   $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')

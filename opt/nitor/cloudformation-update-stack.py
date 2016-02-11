@@ -173,6 +173,9 @@ def deploy(stack_names, yaml_templates, ami_id):
 
             time.sleep(5)
 
+        if (status != "UPDATE_COMPLETE"):
+            sys.exit("Update stack failed: end state " + status);
+
         print("Done!")
 
 if __name__ == '__main__':

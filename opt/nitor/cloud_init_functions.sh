@@ -57,8 +57,13 @@ onexit_sendlogs () {
   {
     date="$(date "+%F %T")"
     [ "${CF_paramAmiName}" ] && ami="${CF_paramAmiName}" || ami="${CF_paramAmi}"
+    case "${INITIAL_STATUS}" in
+      *ROLLBACK*) instanceType=ROLLBACK ;;
+      *_*) instanceType=UPDATE ;;
+      *) instanceType=UNKNOWN ;;
+    esac
     # template git commit sha would be nice also
-    echo "${date} ${status} ${CF_AWS__StackName} ${ami}"
+    echo "${date} ${instanceType} ${status} ${CF_AWS__StackName} ${ami}"
     cat /var/log/cloud-init-output.log
   } | jq -s -R '[{ timestamp: '`date +%s`'000, message: . }]' \
     | aws --region "${CF_AWS__Region}" logs put-log-events --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" --log-events file:///dev/stdin $logSeqArg $logSeqId
@@ -75,6 +80,8 @@ onexit () {
 }
 
 [ "${INSTANCE_ID}" ] || INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+INITIAL_STATUS="$(aws --region "${CF_AWS__Region}" cloudformation describe-stacks --stack-name "${CF_AWS__StackName}" | jq -r '.Stacks[0].StackStatus')"
+
 trap onexit EXIT
 status=FAILURE
 

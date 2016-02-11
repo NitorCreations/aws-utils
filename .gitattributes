@@ -2,6 +2,7 @@
 *.py                    licensefile=.githooks/license-maintainer/LICENSE-hash
 *.yml                   licensefile=.githooks/license-maintainer/LICENSE-hash
 *.yaml                  licensefile=.githooks/license-maintainer/LICENSE-hash
+*.xml                   licensefile=.githooks/LICENSE-xml
 /.githooks/install      licensefile=.githooks/license-maintainer/LICENSE-hash
 /.githooks/pre-commit   licensefile=.githooks/license-maintainer/LICENSE-hash
 /opt/nitor/inventory/*  -licensefile

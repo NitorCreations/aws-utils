@@ -14,6 +14,27 @@
 
 ---
 
+- name: Terminate any old instance(s)
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  tasks:
+    - local_action:
+        module: ec2
+        region: "{{ aws_region }}"
+        instance_tags: { "environment": "nitor", "Name": "{{ job_name }} prototype" }
+        count_tag:     { "environment": "nitor", "Name": "{{ job_name }} prototype" }
+        exact_count: 0
+        instance_type: t2.medium
+        image: "{{ root_ami }}"
+        vpc_subnet_id: subnet-4c0e0338
+        assign_public_ip: yes
+        group_id: sg-6f67950b
+        monitoring: no
+        key_name: "{{ aws_key_name }}"
+        wait: yes
+      register: ec2_prototype_instance
+
 - name: "create instance"
   hosts: 127.0.0.1
   connection: local

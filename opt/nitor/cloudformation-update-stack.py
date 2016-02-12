@@ -153,15 +153,12 @@ def deploy(stack_names, yaml_templates, ami_id):
 
         # Wait for update to complete
 
-        check_stack_command = \
-            ['aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
-
         cloudWatchNotice = "\nCloudWatch url:  https://console.aws.amazon.com/cloudwatch/home#logEvent:group=instanceDeployment;stream=" + stack_name + ";start=" + currentTimeInCloudWatchFormat + "\n"
         print(cloudWatchNotice)
 
         print("Waiting for update to complete:")
         while (True):
-            p = subprocess.Popen(check_stack_command,
+            p = subprocess.Popen(describe_stack_command,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
                                  env=dict(os.environ,
                                           AWS_ACCESS_KEY_ID=aws_access_key_id,

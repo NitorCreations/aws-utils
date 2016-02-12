@@ -27,48 +27,53 @@ get_zone_id() {
   aws route53 list-hosted-zones | jq -r ".HostedZones[]|select(.Name==\"$ZONE\").Id"
 }
 
-deploy_challenge() {
-  local DOMAIN="$1"
-  local TOKEN_FILENAME="$2"
-  local TOKEN_VALUE="$3"
+execute_challenge_op() {
+  local OPERATION="$1"
+  local DOMAIN="$2"
+  local TOKEN_FILENAME="$3"
+  local TOKEN_VALUE="$4"
   ZONE=$(find_longest_hosted_zone $DOMAIN)
   ZONE_ID=$(get_zone_id $ZONE)
-  aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch "{
-    \"Changes\": [
-      {\"Action\": \"UPSERT\",
-      \"ResourceRecordSet\": {
-          \"Name\": \"_acme-challenge.$DOMAIN.\",
-          \"Type\": \"TXT\",
-          \"TTL\": 60,
-          \"ResourceRecords\": [
-            {\"Value\": \"$TOKEN_VALUE\"}
-          ]
-        }
-      }
-    ]
-  }"
+cat > challenge.json << MARKER
+{
+  "Changes": [{
+    "Action": "$OPERATION",
+    "ResourceRecordSet": {
+    "Name": "_acme-challenge.$DOMAIN.",
+    "Type": "TXT",
+    "TTL": 60,
+    "ResourceRecords": [
+       {"Value": "\"$TOKEN_VALUE\""}
+      ]
+    }
+  }
+ ]
+}
+MARKER
+  if ! CHANGE_ID=$(aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch file://challenge.json | jq -e -r ".ChangeInfo.Id"); then
+    echo "$OPERATION failed"
+    return 1
+  else
+    COUNTER=0
+    while [ "$COUNTER" -lt 180 ] && [ "$STATUS" != "INSYNC" ]; do
+      sleep 1
+      STATUS=$(aws route53 get-change --id $CHANGE_ID | jq -r ".ChangeInfo.Status")
+      COUNTER=$(($COUNTER + 1))
+    done
+    if [ "$STATUS" != "INSYNC" ]; then
+      echo "Failed to sync $OPERATION change"
+      return 1
+    fi
+    return 0
+  fi
+}
+
+deploy_challenge() {
+  execute_challenge_op "UPSERT" "$@"
 }
 
 clean_challenge() {
-  local DOMAIN="$1"
-  local TOKEN_FILENAME="$2"
-  local TOKEN_VALUE="$3"
-  ZONE=$(find_longest_hosted_zone $DOMAIN)
-  ZONE_ID=$(get_zone_id $ZONE)
-  aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch "{
-    \"Changes\": [
-      {\"Action\": \"DELETE\",
-      \"ResourceRecordSet\": {
-          \"Name\": \"_acme-challenge.$DOMAIN.\",
-          \"Type\": \"TXT\",
-          \"TTL\": 60,
-          \"ResourceRecords\": [
-            {\"Value\": \"'$TOKEN_VALUE'\"}
-          ]
-        }
-      }
-    ]
-  }"
+  execute_challenge_op "DELETE" "$@"
 }
 
 deploy_cert() {
@@ -82,5 +87,4 @@ deploy_cert() {
   lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.chain < $CHAINFILE
   rm -f $KEYFILE $CERTFILE $CHAINFILE
 }
-
 HANDLER=$1; shift; $HANDLER $@

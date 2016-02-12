@@ -63,7 +63,7 @@ clean_challenge() {
           \"Type\": \"TXT\",
           \"TTL\": 60,
           \"ResourceRecords\": [
-            {\"Value\": \"\"$TOKEN_VALUE\"\"}
+            {\"Value\": \"'$TOKEN_VALUE'\"}
           ]
         }
       }

@@ -179,6 +179,6 @@ def deploy(stack_name, yaml_template):
     print("Done!")
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
+    if len(sys.argv) != 3:
         sys.exit("Usage: deploy.py stack_name yaml_template\nParameters taken from environment as-is, missing parameters use defaults from template")
     deploy(sys.argv[1], sys.argv[2])

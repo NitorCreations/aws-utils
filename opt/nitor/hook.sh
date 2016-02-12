@@ -55,6 +55,7 @@ clean_challenge() {
   local TOKEN_VALUE="$3"
   ZONE=$(find_longest_hosted_zone $DOMAIN)
   ZONE_ID=$(get_zone_id $ZONE)
+  set -x
   aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch "{
     \"Changes\": [
       {\"Action\": \"DELETE\",

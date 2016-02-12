@@ -23,9 +23,7 @@ import collections
 import time
 import datetime
 
-def deploy(stack_names, yaml_templates, ami_id):
-    stack_names = stack_names.split(",")
-    yaml_templates = yaml_templates.split(",")
+def deploy(stack_name, yaml_template):
 
     # Disable buffering, from http://stackoverflow.com/questions/107705/disable-output-buffering
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -46,7 +44,7 @@ def deploy(stack_names, yaml_templates, ami_id):
 
     # Get AMI metadata
 
-    describe_ami_command = [ "aws", "ec2", "describe-images", "--image-ids", ami_id ]
+    describe_ami_command = [ "aws", "ec2", "describe-images", "--image-ids", os.environ["paramAmi"]
     print("Checking AMI " + ami_id + " metadata: " + str(describe_ami_command))
     p = subprocess.Popen(describe_ami_command,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
@@ -56,42 +54,105 @@ def deploy(stack_names, yaml_templates, ami_id):
                                   AWS_SESSION_TOKEN=aws_session_token))
     output = p.communicate()
     if p.returncode:
-        sys.exit("Failed to retrieve ami metadata for " + ami_id)
+        sys.exit("Failed to retrieve ami metadata for " + os.environm["paramAmi"])
 
     ami_meta = aws_infra_util.json_load(output[0])
     print("Result: " + aws_infra_util.json_save(ami_meta))
-    ami_name = ami_meta['Images'][0]['Name']
-    ami_created = ami_meta['Images'][0]['CreationDate']
+    os.environ["paramAmiName"] = ami_meta['Images'][0]['Name']
+    os.environ["paramAmiCreated"] = ami_meta['Images'][0]['CreationDate']
 
-    for idx, stack_name in enumerate(stack_names):
-        yaml_template = yaml_templates[idx]
+    print("\n\n**** Deploying stack '" + stack_name + "' with template '" + yaml_template + "' and ami_id " + os.environ["paramAmi"])
 
-        print("\n\n**** Deploying stack '" + stack_name + "' with template '" + yaml_template + "' and ami_id " + ami_id)
+    # Load yaml template and import scripts and patch userdata with metadata hash & params
 
-        # Load yaml template and import scripts and patch userdata with metadata hash & params
+    template_doc = aws_infra_util.yaml_load(open(yaml_template))
+    template_doc = aws_infra_util.import_scripts(template_doc, yaml_template)
+    aws_infra_util.patch_launchconf_userdata_with_metadata_hash_and_params(template_doc)
 
-        template_doc = aws_infra_util.yaml_load(open(yaml_template))
-        template_doc = aws_infra_util.import_scripts(template_doc, yaml_template)
-        aws_infra_util.patch_launchconf_userdata_with_metadata_hash_and_params(template_doc)
+    if "Parameters" not in template_doc:
+        template_doc['Parameters'] = []
+    template_parameters = template_doc['Parameters']
+    if (not "paramAmiName" in template_parameters):
+        template_parameters['paramAmiName']    = collections.OrderedDict([("Description", "AMI Name"), ("Type", "String"), ("Default", "")])
+    if (not "paramAmiCreated" in template_parameters):
+        template_parameters['paramAmiCreated'] = collections.OrderedDict([("Description", "AMI Creation Date"), ("Type", "String"), ("Default", "")])
 
-        if "Parameters" not in template_doc:
-            template_doc['Parameters'] = []
-        template_parameters = template_doc['Parameters']
-        if (not "paramAmiName" in template_parameters):
-            template_parameters['paramAmiName']    = collections.OrderedDict([("Description", "AMI Name"), ("Type", "String"), ("Default", "")])
-        if (not "paramAmiCreated" in template_parameters):
-            template_parameters['paramAmiCreated'] = collections.OrderedDict([("Description", "AMI Creation Date"), ("Type", "String"), ("Default", "")])
+    json_template = aws_infra_util.json_save(template_doc)
 
-        json_template = aws_infra_util.json_save(template_doc)
+    # save result
 
-        print("** Final template:")
-        print(json_template)
-        print("")
+    print("** Final template:")
+    print(json_template)
+    print("")
 
-        # Load previous stack information to know which parameters have been deployed before
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(json_template)
+    tmp.close()
 
-        describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
-        print("Checking for previous stack info: " + str(describe_stack_command))
+    # Load previous stack information to see if it has been deployed before
+
+    describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
+    print("Checking for previous stack info: " + str(describe_stack_command))
+    p = subprocess.Popen(describe_stack_command,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                         env=dict(os.environ,
+                                  AWS_ACCESS_KEY_ID=aws_access_key_id,
+                                  AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
+                                  AWS_SESSION_TOKEN=aws_session_token))
+    output = p.communicate()
+    if p.returncode:
+        if (! output[1].endswith("does not exist\n")):
+            sys.exit("Failed to retrieve old stack for " + stack_name + ": " + output[1])
+        stack_oper = 'create-stack'
+    else:
+        stack_oper = 'update-stack'
+
+    # Create/update stack
+
+    params_doc = []
+    for key in template_parameters.keys():
+        if (key in os.environ):
+            val = os.environ[key]
+            print("Parameter " + key + ": using custom value " + val
+            params_doc.append({ 'ParameterKey': key, 'ParameterValue': val })
+        else:
+            val = template_parameters[key]
+            print("Parameter " + key + ": using default value " + val
+
+    stack_command = \
+        ['aws', 'cloudformation', stack_oper, '--stack-name',
+         stack_name,
+         '--template-body',
+         'file://' + tmp.name,
+         '--capabilities',
+         'CAPABILITY_IAM',
+         '--parameters',
+         aws_infra_util.json_save(params_doc)
+         ]
+
+    currentTimeInCloudWatchFormat = datetime.datetime.now().strftime("%FT%H%%253A%M%%253A%SZ")
+
+    print(stack_oper + ": " + str(stack_command))
+    p = subprocess.Popen(stack_command,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                         env=dict(os.environ,
+                                  AWS_ACCESS_KEY_ID=aws_access_key_id,
+                                  AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
+                                  AWS_SESSION_TOKEN=aws_session_token))
+    output = p.communicate()
+    os.remove(tmp.name)
+    if p.returncode:
+        sys.exit(stack_oper + " failed: " + output[1])
+
+    print(output[0])
+
+    # Wait for update to complete
+
+    cloudWatchNotice = "\nCloudWatch url:  https://console.aws.amazon.com/cloudwatch/home#logEvent:group=instanceDeployment;stream=" + stack_name + ";start=" + currentTimeInCloudWatchFormat + "\n"
+    print(cloudWatchNotice)
+
+    print("Waiting for update to complete:")
+    while (True):
         p = subprocess.Popen(describe_stack_command,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
                              env=dict(os.environ,
@@ -100,90 +161,24 @@ def deploy(stack_names, yaml_templates, ami_id):
                                       AWS_SESSION_TOKEN=aws_session_token))
         output = p.communicate()
         if p.returncode:
-            print("Failed to retrieve old stack for " + stack_name + " - assuming first deployment: " + output[1])
-            sys.exit("Not implemented - should probably call create-stack instead of update-stack")
+            sys.exit("Describe stack failed: " + output[1])
 
-        previous_stack = aws_infra_util.json_load(output[0])
-        print("Result: " + aws_infra_util.json_save(previous_stack))
-        previous_stack_parameters = collections.OrderedDict()
-        if "Stacks" in previous_stack:
-            for kv in previous_stack['Stacks'][0]['Parameters']:
-                previous_stack_parameters[kv['ParameterKey']] = kv['ParameterValue']
+        stack_info = aws_infra_util.json_load(output[0])
+        status = stack_info['Stacks'][0]['StackStatus']
+        print("Status: " + status)
+        if (not status.endswith("_IN_PROGRESS")):
+            break
 
-        # Update stack
+        time.sleep(5)
 
-        tmp = tempfile.NamedTemporaryFile(delete=False)
-        tmp.write(json_template)
-        tmp.close()
+    print(cloudWatchNotice)
 
-        update_stack_command = \
-            ['aws', 'cloudformation', 'update-stack', '--stack-name',
-             stack_name,
-             '--template-body',
-             'file://' + tmp.name,
-             '--capabilities',
-             'CAPABILITY_IAM',
-             '--parameters',
-             'ParameterKey=paramAmi,ParameterValue=' + ami_id,
-             'ParameterKey=paramAmiName,ParameterValue=' + ami_name,
-             'ParameterKey=paramAmiCreated,ParameterValue=' + ami_created
-             ]
-        if ("paramAwsUtilsVersion" in template_parameters):
-            update_stack_command.append('ParameterKey=paramAwsUtilsVersion,ParameterValue=' + os.environ['AWSUTILS_VERSION'])
+    if (status != "UPDATE_COMPLETE"):
+        sys.exit("Update stack failed: end state " + status)
 
-        for key, value in template_doc['Parameters'].iteritems():
-            if "paramAmi" not in key and key != 'paramAwsUtilsVersion' and key in previous_stack_parameters:
-                update_stack_command.append('ParameterKey='+key+',UsePreviousValue=true')
-
-        currentTimeInCloudWatchFormat = datetime.datetime.now().strftime("%FT%H%%253A%M%%253A%SZ")
-
-        print("Updating stack: " + str(update_stack_command))
-        p = subprocess.Popen(update_stack_command,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                             env=dict(os.environ,
-                                      AWS_ACCESS_KEY_ID=aws_access_key_id,
-                                      AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
-                                      AWS_SESSION_TOKEN=aws_session_token))
-        output = p.communicate()
-        os.remove(tmp.name)
-        if p.returncode:
-            sys.exit("Update stack failed: " + output[1])
-
-        print(output[0])
-
-        # Wait for update to complete
-
-        cloudWatchNotice = "\nCloudWatch url:  https://console.aws.amazon.com/cloudwatch/home#logEvent:group=instanceDeployment;stream=" + stack_name + ";start=" + currentTimeInCloudWatchFormat + "\n"
-        print(cloudWatchNotice)
-
-        print("Waiting for update to complete:")
-        while (True):
-            p = subprocess.Popen(describe_stack_command,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                                 env=dict(os.environ,
-                                          AWS_ACCESS_KEY_ID=aws_access_key_id,
-                                          AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
-                                          AWS_SESSION_TOKEN=aws_session_token))
-            output = p.communicate()
-            if p.returncode:
-                sys.exit("Describe stack failed: " + output[1])
-
-            stack_info = aws_infra_util.json_load(output[0])
-            status = stack_info['Stacks'][0]['StackStatus']
-            print("Status: " + status)
-            if (not status.endswith("_IN_PROGRESS")):
-                break
-
-            time.sleep(5)
-
-        print(cloudWatchNotice)
-
-        if (status != "UPDATE_COMPLETE"):
-            sys.exit("Update stack failed: end state " + status)
-
-        print("Done!")
+    print("Done!")
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
-        sys.exit("Usage: deploy.py stack_name yaml_template ami_id")
-    deploy(sys.argv[1], sys.argv[2], sys.argv[3])
+        sys.exit("Usage: deploy.py stack_name yaml_template\nParameters taken from environment as-is, missing parameters use defaults from template")
+    deploy(sys.argv[1], sys.argv[2])

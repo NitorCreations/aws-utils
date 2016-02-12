@@ -36,4 +36,7 @@ else
   echo "Using AMI_ID $AMI_ID given as job parameter"
 fi
 
-aws-utils/cloudformation-update-stack.py "${stack}" "${image}/stack-${stack}/template.yaml" $AMI_ID
+export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra.properties files
+export paramAmi=$AMI_ID
+
+aws-utils/cloudformation-update-stack.py "${stack}" "${image}/stack-${stack}/template.yaml"

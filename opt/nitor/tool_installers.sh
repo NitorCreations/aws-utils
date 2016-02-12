@@ -18,8 +18,6 @@
 if [ -z "$AWSUTILS_VERSION" ]; then
   if [ -n "${CF_paramAwsUtilsVersion}" ]; then
     AWSUTILS_VERSION="${CF_paramAwsUtilsVersion}"
-  else
-    AWSUTILS_VERSION=0.37
   fi
 fi
 if [ -z "$MAVEN_VERSION" ]; then
@@ -93,6 +91,10 @@ MARKER
   systemctl start fail2ban
 }
 update_aws_utils () {
+  if [ ! "$AWSUTILS_VERSION" ]; then
+    echo "Neither AWSUTILS_VERSION nor CF_paramAwsUtilsVersion set - cannot update aws_utils"
+    exit 1
+  fi
   echo "Updating aws-utils from version $(cat /opt/nitor/aws-utils.version) to $AWSUTILS_VERSION"
   bash "$(dirname "${BASH_SOURCE[0]}")/install_tools.sh" "${AWSUTILS_VERSION}"
 }

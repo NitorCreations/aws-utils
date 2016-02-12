@@ -44,8 +44,8 @@ def deploy(stack_name, yaml_template):
 
     # Get AMI metadata
 
-    describe_ami_command = [ "aws", "ec2", "describe-images", "--image-ids", os.environ["paramAmi"]
-    print("Checking AMI " + ami_id + " metadata: " + str(describe_ami_command))
+    describe_ami_command = [ "aws", "ec2", "describe-images", "--image-ids", os.environ["paramAmi"] ]
+    print("Checking AMI " + os.environ["paramAmi"] + " metadata: " + str(describe_ami_command))
     p = subprocess.Popen(describe_ami_command,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
                          env=dict(os.environ,

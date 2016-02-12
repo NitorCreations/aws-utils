@@ -81,7 +81,7 @@ onexit () {
 }
 
 [ "${INSTANCE_ID}" ] || INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-INITIAL_STATUS="$(aws --region "${CF_AWS__Region}" cloudformation describe-stacks --stack-name "${CF_AWS__StackName}" | jq -r '.Stacks[0].StackStatus')"
+[ "${INITIAL_STATUS}" ] || INITIAL_STATUS="$(aws --region "${CF_AWS__Region}" cloudformation describe-stacks --stack-name "${CF_AWS__StackName}" | jq -r '.Stacks[0].StackStatus')"
 
 trap onexit EXIT
 status=FAILURE

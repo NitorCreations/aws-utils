@@ -116,7 +116,7 @@ def deploy(stack_name, yaml_template):
             print("Parameter " + key + ": using custom value " + val)
             params_doc.append({ 'ParameterKey': key, 'ParameterValue': val })
         else:
-            val = template_parameters[key]
+            val = template_parameters[key]['Default']
             print("Parameter " + key + ": using default value " + val)
 
     stack_command = \

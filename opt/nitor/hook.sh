@@ -41,12 +41,12 @@ deploy_challenge() {
           \"Type\": \"TXT\",
           \"TTL\": 60,
           \"ResourceRecords\": [
-            \"Value\": \"$TOKEN_VALUE\",
-            ]
-          }
+            {\"Value\": \"$TOKEN_VALUE\"}
+          ]
         }
-      ]
-    }"
+      }
+    ]
+  }"
 }
 
 clean_challenge() {
@@ -63,12 +63,12 @@ clean_challenge() {
           \"Type\": \"TXT\",
           \"TTL\": 60,
           \"ResourceRecords\": [
-            \"Value\": \"$TOKEN_VALUE\",
-            ]
-          }
+            {\"Value\": \"$TOKEN_VALUE\"}
+          ]
         }
-      ]
-    }"
+      }
+    ]
+  }"
 }
 
 deploy_cert() {

@@ -35,17 +35,18 @@ deploy_challenge() {
   ZONE_ID=$(get_zone_id $ZONE)
   aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch "{
     \"Changes\": [
-      \"Action\": \"UPSERT\",
+      {\"Action\": \"UPSERT\",
       \"ResourceRecordSet\": {
           \"Name\": \"_acme-challenge.$DOMAIN.\",
           \"Type\": \"TXT\",
           \"TTL\": 60,
           \"ResourceRecords\": [
             \"Value\": \"$TOKEN_VALUE\",
-            ],
+            ]
           }
-        ]
-      }"
+        }
+      ]
+    }"
 }
 
 clean_challenge() {
@@ -56,17 +57,18 @@ clean_challenge() {
   ZONE_ID=$(get_zone_id $ZONE)
   aws route53 change-resource-record-sets --hosted-zone-id $ZONE_ID --change-batch "{
     \"Changes\": [
-      \"Action\": \"DELETE\",
+      {\"Action\": \"DELETE\",
       \"ResourceRecordSet\": {
           \"Name\": \"_acme-challenge.$DOMAIN.\",
           \"Type\": \"TXT\",
           \"TTL\": 60,
           \"ResourceRecords\": [
             \"Value\": \"$TOKEN_VALUE\",
-            ],
+            ]
           }
-        ]
-      }"
+        }
+      ]
+    }"
 }
 
 deploy_cert() {

@@ -58,6 +58,7 @@ onexit_sendlogs () {
     date="$(date "+%F %T")"
     [ "${CF_paramAmiName}" ] && ami="${CF_paramAmiName}" || ami="${CF_paramAmi}"
     case "${INITIAL_STATUS}" in
+      *CREATE*) instanceType=CREATE ;;
       *ROLLBACK*) instanceType=ROLLBACK ;;
       *_*) instanceType=UPDATE ;;
       *) instanceType=UNKNOWN ;;

@@ -85,6 +85,8 @@ deploy_cert() {
   lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.crt < $CERTFILE
   lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.key.clear < $KEYFILE
   lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.chain < $CHAINFILE
-  #rm -f $KEYFILE $CERTFILE $CHAINFILE
+  lpass sync
+  lpass logout -f
+  rm -f $KEYFILE $CERTFILE $CHAINFILE
 }
 HANDLER=$1; shift; $HANDLER $@

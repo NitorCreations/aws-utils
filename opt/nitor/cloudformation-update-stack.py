@@ -173,7 +173,7 @@ def deploy(stack_name, yaml_template):
 
     print(cloudWatchNotice)
 
-    if (status != "CREATE_COMPLETE" and status != "UPDATE_COMPLETE"):
+    if ((stack_oper == "create-stack" and status != "CREATE_COMPLETE") or (stack_oper == "update-stack" and status != "UPDATE_COMPLETE")):
         sys.exit(stack_oper + " failed: end state " + status)
 
     print("Done!")

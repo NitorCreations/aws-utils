@@ -26,7 +26,7 @@ AMIID="${!VAR_AMIID}"
 
 # Bake
 cd ${image}/image
-export APP_HOME APP_USER
+export APP_HOME APP_USER AWSUTILS_VERSION AWS_KEY_NAME
 SSH_USER=$IMAGETYPE
 $WORKSPACE/aws-utils/bake-ami.sh $AMIID $IMAGETYPE $SSH_USER ../../fetch-secrets.sh
 

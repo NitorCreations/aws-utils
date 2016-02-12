@@ -101,7 +101,7 @@ def deploy(stack_name, yaml_template):
                                   AWS_SESSION_TOKEN=aws_session_token))
     output = p.communicate()
     if p.returncode:
-        if (! output[1].endswith("does not exist\n")):
+        if (not output[1].endswith("does not exist\n")):
             sys.exit("Failed to retrieve old stack for " + stack_name + ": " + output[1])
         stack_oper = 'create-stack'
     else:

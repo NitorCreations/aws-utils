@@ -15,6 +15,7 @@
 # limitations under the License.
 
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/aws_tools.sh"
 
 case  "$SYSTEM_TYPE" in
   ubuntu)
@@ -39,12 +40,13 @@ perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }
 apache_install_certs () {
   check_parameters APACHE_SSL_CONF CF_paramUseLetsencrypt CF_paramDnsName
   if [ "${CF_paramUseLetsencrypt}" = "true" ]; then
-    check_parameters CF_paramAdminEmail
+    check_parameters CF_paramAdminEmail CF_paramEip
+    aws_ec2_associate_address
     generate-dummy-certs.sh ${CF_paramDnsName}
     apache_enable_and_start_service
     WEBROOT=/var/www/${CF_paramDnsName}
     mkdir -p $WEBROOT/.well-known
-    RETRIES=0
+    local RETRIES=0
     while ! /opt/letsencrypt/letsencrypt-auto certonly --webroot -w $WEBROOT --agree-tos --email "${CF_paramAdminEmail}" -d "${CF_paramDnsName}" &&  [ $RETRIES -lt 5 ]; do
       RETRIES=$(($RETRIES + 1))
       echo "Failed to get certs - retrying ($RETRIES)"

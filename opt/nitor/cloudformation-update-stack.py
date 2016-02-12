@@ -146,12 +146,12 @@ def deploy(stack_name, yaml_template):
 
     print(output[0])
 
-    # Wait for update to complete
+    # Wait for create/update to complete
 
     cloudWatchNotice = "\nCloudWatch url:  https://console.aws.amazon.com/cloudwatch/home#logEvent:group=instanceDeployment;stream=" + stack_name + ";start=" + currentTimeInCloudWatchFormat + "\n"
     print(cloudWatchNotice)
 
-    print("Waiting for update to complete:")
+    print("Waiting for " + stack_oper + " to complete:")
     while (True):
         p = subprocess.Popen(describe_stack_command,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
@@ -173,8 +173,8 @@ def deploy(stack_name, yaml_template):
 
     print(cloudWatchNotice)
 
-    if (status != "UPDATE_COMPLETE"):
-        sys.exit("Update stack failed: end state " + status)
+    if (status != "CREATE_COMPLETE" and status != "UPDATE_COMPLETE"):
+        sys.exit(stack_oper + " failed: end state " + status)
 
     print("Done!")
 

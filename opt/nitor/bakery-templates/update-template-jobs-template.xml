@@ -31,13 +31,13 @@
     <configVersion>2</configVersion>
     <userRemoteConfigs>
       <hudson.plugins.git.UserRemoteConfig>
-        <url>GIT_URL</url>
+        <url>{{giturl}}</url>
         <credentialsId>CREDENTIALS_ID</credentialsId>
       </hudson.plugins.git.UserRemoteConfig>
     </userRemoteConfigs>
     <branches>
       <hudson.plugins.git.BranchSpec>
-        <name>*/master</name>
+        <name>*/{{branch}}</name>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
@@ -45,11 +45,11 @@
     <extensions/>
   </scm>
   <canRoam>true</canRoam>
-  <disabled>false</disabled>
+  <disabled>true</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
   <triggers>
-    <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.16.0">
+    <com.cloudbees.jenkins.GitHubPushTrigger plugin="github@1.17.0">
       <spec></spec>
     </com.cloudbees.jenkins.GitHubPushTrigger>
   </triggers>
@@ -71,7 +71,7 @@ else
   ( cd aws-utils ; ln -s opt/nitor/* . ; ln -s usr/bin/* . )
 fi
 
-./aws-utils/bakery-templates/update-template-jobs.sh &quot;PREFIX&quot;
+./aws-utils/bakery-templates/update-template-jobs.sh &quot;{{prefix}}&quot;
 </command>
     </hudson.tasks.Shell>
   </builders>

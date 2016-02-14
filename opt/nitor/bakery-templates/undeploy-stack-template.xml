@@ -1,0 +1,89 @@
+<!--
+ Copyright 2016 Nitor Creations Oy
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Undeploy aka delete {{stack}} in branch {{branch}}. Does nothing if stack is not deployed.&#xd;
+&#xd;
+Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{jobupdaterbuild}}.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.blockqueuedjob.BlockItemJobProperty plugin="block-queued-job@0.2.0">
+      <conditions>
+        <org.jenkinsci.plugins.blockqueuedjob.condition.BuildingBlockQueueCondition>
+          <project>{{jobupdater}}</project>
+        </org.jenkinsci.plugins.blockqueuedjob.condition.BuildingBlockQueueCondition>
+      </conditions>
+    </org.jenkinsci.plugins.blockqueuedjob.BlockItemJobProperty>
+    <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.16.1">
+      <optOut>false</optOut>
+    </com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.1">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>{{giturl}}</url>
+        <credentialsId>CREDENTIALS_ID</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/{{branch}}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>true</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash -ex
+
+# Install tools
+rm -rf aws-utils
+if true ; then
+  # latest release
+  UTILS_VERSION=$AWSUTILS_VERSION
+  mkdir -p aws-utils
+  wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 3 -C aws-utils
+else
+  # latest commit
+  git clone git@github.com:NitorCreations/aws-utils.git
+  ( cd aws-utils ; ln -s opt/nitor/* . ; ln -s usr/bin/* . )
+fi
+
+./aws-utils/bakery-templates/undeploy-stack.sh &quot;{{image}}&quot; &quot;{{stack}}&quot;
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ansicolor.AnsiColorBuildWrapper plugin="ansicolor@0.4.2">
+      <colorMapName>xterm</colorMapName>
+    </hudson.plugins.ansicolor.AnsiColorBuildWrapper>
+  </buildWrappers>
+</project>

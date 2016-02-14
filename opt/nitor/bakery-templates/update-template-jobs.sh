@@ -21,6 +21,7 @@ source "$(dirname "$0")/template_tools.sh"
 updatetime="$(date "+%F %T %Z")"
 image_template="TEMPLATE {{prefix}}-{{image}}-bake"
 deploy_template="TEMPLATE {{prefix}}-{{image}}-deploy-{{stack}}"
+undeploy_template="TEMPLATE {{prefix}}-{{image}}-undeploy-{{stack}}"
 
 for imagebasedir in * ; do
   [ -d "${imagebasedir}" ] || continue
@@ -30,8 +31,8 @@ for imagebasedir in * ; do
     continue
   fi
 
-  autostackjobnames=
-  allstackjobnames=
+  stack_auto_deploy_job_names=
+  stack_all_deploy_job_names=
 
   common_vars=( image="${imagebasedir}" imagetype="${imagetype}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" branch="${GIT_BRANCH##*/}" )
 
@@ -42,24 +43,42 @@ for imagebasedir in * ; do
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
       manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackdir}")"
+      disable_undeploy="$(set -e ; get_var DISABLE_UNDEPLOY "${imagebasedir}" "${stackdir}")"
       stack_vars=( stack="${stackname}" imagejob="${new_image_job}" )
-      new_job="$(     set -e ; generate_job_name          "${deploy_template}" "${common_vars[@]}" "${stack_vars[@]}")"
-      new_job_file="$(set -e ; generate_job_from_template "${deploy_template}" "${common_vars[@]}" "${stack_vars[@]}")"
-      if [ "${manual_deploy}" ]; then
-	# disable job triggers
-	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!s; print $f;' "${new_job_file}"
+
+      # prepare
+
+      deploy_job="$(         set -e ; generate_job_name          "${deploy_template}"   "${common_vars[@]}" "${stack_vars[@]}")"
+      deploy_job_file="$(    set -e ; generate_job_from_template "${deploy_template}"   "${common_vars[@]}" "${stack_vars[@]}")"
+
+      undeploy_job="$(       set -e ; generate_job_name          "${undeploy_template}" "${common_vars[@]}" "${stack_vars[@]}")"
+      if [ "$disable_undeploy" != "y" ]; then
+        undeploy_job_file="$(set -e ; generate_job_from_template "${undeploy_template}" "${common_vars[@]}" "${stack_vars[@]}")"
       fi
-      stackjobname="$(set -e ; create_or_update_job "$new_job" "$new_job_file")"
-      allstackjobnames="${allstackjobnames}${stackjobname},"
+
+      # create/update
+
+      if [ "${manual_deploy}" = "y" ]; then
+        # disable job triggers
+        perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!s; print $f;' "${deploy_job_file}"
+      fi
+      create_or_update_job "$deploy_job" "$deploy_job_file"
+      stack_all_deploy_job_names="${stack_all_deploy_job_names}${deploy_job},"
       if [ ! "${manual_deploy}" ]; then
-	autostackjobnames="${autostackjobnames}${stackjobname},"
+        stack_auto_deploy_job_names="${stack_auto_deploy_job_names}${deploy_job},"
+      fi
+
+      if [ "$disable_undeploy" != "y" ]; then
+        create_or_update_job "$undeploy_job" "$undeploy_job_file"
+      else
+        delete_job_if_exists "$undeploy_job"
       fi
     fi
   done
 
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    image_vars=( autostackjobs="${autostackjobnames}" allstackjobs="${allstackjobnames}" )
+    image_vars=( autostackjobs="${stack_auto_deploy_job_names}" allstackjobs="${stack_all_deploy_job_names}" )
     new_image_job_file="$(set -e ; generate_job_from_template "${image_template}" "${common_vars[@]}" "${image_vars[@]}")"
     create_or_update_job "$new_image_job" "$new_image_job_file"
   fi

@@ -86,7 +86,13 @@ create_or_update_job () {
     echo "Disable job." >&2
     cli disable-job "${new_job}"
   fi
-  echo "${new_job}"
+}
+
+delete_job_if_exists () {
+  local job="$1"
+  if job_exists "${job}" ; then
+    cli delete-job "${job}"
+  fi
 }
 
 trigger_job () {

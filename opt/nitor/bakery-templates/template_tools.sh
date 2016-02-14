@@ -84,6 +84,11 @@ create_or_update_job () {
   echo "${new_job}"
 }
 
+trigger_job () {
+  local job="$1"
+  cli build "$job"
+}
+
 infrapropfile="infra-${GIT_BRANCH##*/}.properties"
 
 # usage get_var <name> [<imagedir> [<stackdir>]]

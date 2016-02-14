@@ -17,15 +17,18 @@
 set -xe
 
 image="$1" ; shift
-stack="$1" ; shift
+ORIG_STACK_NAME="$1" ; shift
 AMI_ID="$1" ; shift
 imagejob="$1" ; shift
+
+# by default, prefix stack name with branch name, to avoid accidentally using same names in different branches - override in infra-<branch>.properties to your liking. STACK_NAME and ORIG_STACK_NAME can be assumed to exist.
+STACK_NAME="${GIT_BRANCH##*/}-${ORIG_STACK_NAME}"
 
 infrapropfile="infra-${GIT_BRANCH##*/}.properties"
 
 source "${infrapropfile}"
 [ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
-[ -e "${image}/stack-${stack}/${infrapropfile}" ] && source "${image}/stack-${stack}/${infrapropfile}"
+[ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
 
 if [ ! "$AMI_ID" ]; then
   AMI_ID="$(curl -fs "http://localhost:8080/job/${imagejob}/lastSuccessfulBuild/artifact/ami-id.txt")"
@@ -41,4 +44,4 @@ fi
 export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra-<branch>.properties files
 export paramAmi=$AMI_ID
 
-aws-utils/cloudformation-update-stack.py "${stack}" "${image}/stack-${stack}/template.yaml"
+aws-utils/cloudformation-update-stack.py "${STACK_NAME}" "${image}/stack-${ORIG_STACK_NAME}/template.yaml"

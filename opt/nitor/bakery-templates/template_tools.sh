@@ -31,6 +31,11 @@ rm -rf ${cli_cache}
 mkdir ${cli_cache}
 orig_jobs_file="${cli_cache}/jobs.txt"
 
+create_temp_file () {
+  local pattern="$1"
+  mktemp -p "${cli_cache}" "$pattern"
+}
+
 cli () {
   [ -r ${cli_cache}/jenkins-cli.jar ] || wget -O ${cli_cache}/jenkins-cli.jar http://localhost:8080/jnlpJars/jenkins-cli.jar
   java -jar ${cli_cache}/jenkins-cli.jar -s http://localhost:8080/ "$@"
@@ -55,7 +60,7 @@ generate_job_from_template () {
   local template_job="$1"
   shift
   local template_job_file="$(set -e ; cli_get_job "$template_job")"
-  local new_job_file="$(set -e ; mktemp -p "${cli_cache}" job_XXXXXXXX.xml)"
+  local new_job_file="$(set -e ; create_temp_file job_XXXXXXXX.xml)"
   apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
   echo "${new_job_file}"
 }
@@ -87,6 +92,11 @@ create_or_update_job () {
 trigger_job () {
   local job="$1"
   cli build "$job"
+}
+
+create_view () {
+  local new_view_file="$1"
+  cli create-view < "$new_view_file"
 }
 
 infrapropfile="infra-${GIT_BRANCH##*/}.properties"

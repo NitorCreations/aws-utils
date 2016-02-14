@@ -37,3 +37,7 @@ fi
 create_or_update_job "$new_update_job" "$new_update_job_file"
 
 trigger_job "$new_update_job"
+
+new_view_file="$(set -e ; create_temp_file view_XXXXXXXXXX.xml)"
+apply_parameters "${vars[@]}" < "${0%.sh}-view.xml" > "$new_view_file"
+create_view "$new_view_file"

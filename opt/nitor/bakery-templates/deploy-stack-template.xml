@@ -55,7 +55,7 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
     </userRemoteConfigs>
     <branches>
       <hudson.plugins.git.BranchSpec>
-        <name>*/master</name>
+        <name>*/{{branch}}</name>
       </hudson.plugins.git.BranchSpec>
     </branches>
     <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>

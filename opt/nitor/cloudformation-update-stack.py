@@ -107,6 +107,12 @@ def deploy(stack_name, yaml_template):
     else:
         stack_oper = 'update-stack'
 
+        # Dump original status, for the record
+
+        stack_info = aws_infra_util.json_load(output[0])
+        status = stack_info['Stacks'][0]['StackStatus']
+        print("Status: " + status)
+
     # Create/update stack
 
     params_doc = []

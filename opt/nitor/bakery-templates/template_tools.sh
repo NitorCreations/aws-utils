@@ -60,11 +60,15 @@ generate_job_from_template () {
   echo "${new_job_file}"
 }
 
+job_exists () {
+  fgrep -xq "$1" "${orig_jobs_file}"
+}
+
 create_or_update_job () {
   new_job="$1"
   new_job_file="$2"
   enable=1
-  if fgrep -xq "${new_job}" "${orig_jobs_file}" ; then
+  if job_exists "$new_job" ; then
     ! cli get-job "${new_job}" | egrep '^  <disabled>true</disabled>$' || enable=0
     cli update-job "${new_job}" < "${new_job_file}"
   else

@@ -33,15 +33,18 @@ for imagebasedir in * ; do
   autostackjobnames=
   allstackjobnames=
 
-  new_image_job="$(set -e ; generate_job_name "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+  common_vars=( image="${imagebasedir}" imagetype="${imagetype}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" branch="${GIT_BRANCH##*/}" )
+
+  new_image_job="$(set -e ; generate_job_name "${image_template}" "${common_vars[@]}")"
 
   for stackdir in "${imagebasedir}/stack-"* ; do
     if [ -d "${stackdir}" ]; then
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
       manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackdir}")"
-      new_job="$(     set -e ; generate_job_name          "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" imagejob="${new_image_job}")"
-      new_job_file="$(set -e ; generate_job_from_template "${deploy_template}" image="${imagebasedir}" imagetype="${imagetype}" stack="${stackname}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}" imagejob="${new_image_job}")"
+      stack_vars=( stack="${stackname}" imagejob="${new_image_job}" )
+      new_job="$(     set -e ; generate_job_name          "${deploy_template}" "${common_vars[@]}" "${stack_vars[@]}")"
+      new_job_file="$(set -e ; generate_job_from_template "${deploy_template}" "${common_vars[@]}" "${stack_vars[@]}")"
       if [ "${manual_deploy}" ]; then
 	# disable job triggers
 	perl -i -e 'undef $/; my $f=<>; $f =~ s!<triggers>.*?</triggers>!<triggers />!s; print $f;' "${new_job_file}"
@@ -56,7 +59,8 @@ for imagebasedir in * ; do
 
   imagedir="${imagebasedir}/image"
   if [ -d "${imagedir}" ]; then
-    new_image_job_file="$(set -e ; generate_job_from_template "${image_template}" image="${imagebasedir}" imagetype="${imagetype}" autostackjobs="${autostackjobnames}" allstackjobs="${allstackjobnames}" updatetime="${updatetime}" giturl="${GIT_URL}" prefix="${PREFIX}")"
+    image_vars=( autostackjobs="${autostackjobnames}" allstackjobs="${allstackjobnames}" )
+    new_image_job_file="$(set -e ; generate_job_from_template "${image_template}" "${common_vars[@]}" "${image_vars[@]}")"
     create_or_update_job "$new_image_job" "$new_image_job_file"
   fi
 done

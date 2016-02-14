@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -14,8 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -ex
+
+infrapropfile="infra-${GIT_BRANCH##*/}.properties"
+
 source "$(dirname "$0")/template_tools.sh"
-source infra.properties
+source "${infrapropfile}"
 
 rampuptime="$(date "+%F %T %Z")"
 update_template="TEMPLATE {{prefix}}-update-template-jobs"

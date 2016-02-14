@@ -21,9 +21,11 @@ stack="$1" ; shift
 AMI_ID="$1" ; shift
 imagejob="$1" ; shift
 
-source "infra.properties"
-[ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
-[ -e "${image}/stack-${stack}/infra.properties" ] && source "${image}/stack-${stack}/infra.properties"
+infrapropfile="infra-${GIT_BRANCH##*/}.properties"
+
+source "${infrapropfile}"
+[ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
+[ -e "${image}/stack-${stack}/${infrapropfile}" ] && source "${image}/stack-${stack}/${infrapropfile}"
 
 if [ ! "$AMI_ID" ]; then
   AMI_ID="$(curl -fs "http://localhost:8080/job/${imagejob}/lastSuccessfulBuild/artifact/ami-id.txt")"
@@ -36,7 +38,7 @@ else
   echo "Using AMI_ID $AMI_ID given as job parameter"
 fi
 
-export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra.properties files
+export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra-<branch>.properties files
 export paramAmi=$AMI_ID
 
 aws-utils/cloudformation-update-stack.py "${stack}" "${image}/stack-${stack}/template.yaml"

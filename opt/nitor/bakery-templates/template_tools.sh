@@ -84,12 +84,14 @@ create_or_update_job () {
   echo "${new_job}"
 }
 
+infrapropfile="infra-${GIT_BRANCH##*/}.properties"
+
 # usage get_var <name> [<imagedir> [<stackdir>]]
 get_var () {
   (
-    source infra.properties
-    [ ! "$2" -o ! -r "$2/infra.properties" ] || source "$2/infra.properties"
-    [ ! "$3" -o ! -r "$3/infra.properties" ] || source "$3/infra.properties"
+    source "${infrapropfile}"
+    [ ! "$2" -o ! -r "$2/${infrapropfile}" ] || source "$2/${infrapropfile}"
+    [ ! "$3" -o ! -r "$3/${infrapropfile}" ] || source "$3/${infrapropfile}"
     echo -n "${!1}"
   )
 }

@@ -17,7 +17,7 @@
 <project>
   <actions/>
   <description>Ramp up a new branch in Jenkins. Ramp-up means&#xd;
-  a) creating a new job based on `TEMPLATE {{prefix}}-update-template-jobs` using settings from infra-{branch}.properties in the root of given branch&#xd;
+  a) creating a new job based on `TEMPLATE {{prefix}}-update-template-jobs` using settings from infra-&lt;branch&gt;.properties in the root of given branch&#xd;
   b) scheduling a build of the newly created job</description>
   <keepDependencies>false</keepDependencies>
   <properties>
@@ -33,7 +33,7 @@
         <hudson.model.StringParameterDefinition>
           <name>BRANCH</name>
           <description>The branch to ramp up. Will fail if the branch is already ramped up. Ramp-up means
-  a) creating a new job based on `TEMPLATE {{prefix}}-update-template-jobs` using settings from infra-{branch}.properties in the root of given branch
+  a) creating a new job based on `TEMPLATE {{prefix}}-update-template-jobs` using settings from infra-&lt;branch&gt;.properties in the root of given branch
   b) scheduling a build of the newly created job</description>
           <defaultValue>master</defaultValue>
         </hudson.model.StringParameterDefinition>

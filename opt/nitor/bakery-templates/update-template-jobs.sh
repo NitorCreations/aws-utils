@@ -26,7 +26,7 @@ for imagebasedir in * ; do
   [ -d "${imagebasedir}" ] || continue
   imagetype="$(set -e ; get_var IMAGETYPE "${imagebasedir}")"
   if [ ! "${imagetype}" ]; then
-    echo "Missing IMAGETYPE setting in ${imagebasedir}/infra.properties, skipping ${imagebasedir}..."
+    echo "Missing IMAGETYPE setting in ${imagebasedir}/infra-<branch>.properties, skipping ${imagebasedir}..."
     continue
   fi
 

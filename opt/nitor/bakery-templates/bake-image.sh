@@ -18,8 +18,10 @@ set -xe
 
 image="$1" ; shift
 
-source "infra.properties"
-[ -e "${image}/infra.properties" ] && source "${image}/infra.properties"
+infrapropfile="infra-${GIT_BRANCH##*/}.properties"
+
+source "${infrapropfile}"
+[ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
 
 VAR_AMIID="AMIID_${IMAGETYPE}"
 AMIID="${!VAR_AMIID}"
@@ -34,7 +36,7 @@ echo "--------------------- Share to ${SHARE_REGIONS}"
 for region in ${SHARE_REGIONS//,/ } ; do
   var_region_accounts=REGION_${region//-/_}_ACCOUNTS
   if [ ! "${!var_region_accounts}" ]; then
-    echo "Missing setting '${var_region_accounts}' in infra.properties"
+    echo "Missing setting '${var_region_accounts}' in ${infrapropfile}"
     exit 1
   fi
   $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}

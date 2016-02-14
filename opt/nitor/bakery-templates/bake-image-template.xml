@@ -16,7 +16,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
-  <description>Bake image {{image}} of type {{imagetype}}.&#xd;
+  <description>Bake image {{image}} of type {{imagetype}} in branch {{branch}}.&#xd;
 &#xd;
 Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{jobupdaterbuild}}.</description>
   <keepDependencies>false</keepDependencies>

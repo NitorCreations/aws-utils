@@ -16,7 +16,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
-  <description></description>
+  <description>Update Jenkins jobs from template jobs based on infra-{{branch}}.properties files in branch {{branch}}.&#xd;
+&#xd;
+Job ramped up {{rampuptime}} from &quot;{{template}}&quot; by {{jobupdater}} {{jobupdaterbuild}}.</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.16.1">

@@ -43,19 +43,19 @@ cli_get_job () {
 }
 
 generate_job_name () {
-  template_job="$1"
+  local template_job="$1"
   shift
   echo "Creating job based on '$template_job' with parameters" "$@" >&2
-  new_job="$(set -e ; echo "$template_job" | sed 's!^TEMPLATE !!' | apply_parameters "$@")"
+  local new_job="$(set -e ; echo "$template_job" | sed 's!^TEMPLATE !!' | apply_parameters "$@")"
   echo "Job name: '$new_job'" >&2
   echo "${new_job}"
 }
 
 generate_job_from_template () {
-  template_job="$1"
+  local template_job="$1"
   shift
-  template_job_file="$(set -e ; cli_get_job "$template_job")"
-  new_job_file="$(set -e ; mktemp -p "${cli_cache}" job_XXXXXXXX.xml)"
+  local template_job_file="$(set -e ; cli_get_job "$template_job")"
+  local new_job_file="$(set -e ; mktemp -p "${cli_cache}" job_XXXXXXXX.xml)"
   apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
   echo "${new_job_file}"
 }
@@ -65,9 +65,9 @@ job_exists () {
 }
 
 create_or_update_job () {
-  new_job="$1"
-  new_job_file="$2"
-  enable=1
+  local new_job="$1"
+  local new_job_file="$2"
+  local enable=1
   if job_exists "$new_job" ; then
     ! cli get-job "${new_job}" | egrep '^  <disabled>true</disabled>$' || enable=0
     cli update-job "${new_job}" < "${new_job_file}"

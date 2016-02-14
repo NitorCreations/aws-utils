@@ -16,7 +16,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
-  <description>Undeploy aka delete {{stack}} in branch {{branch}}. Does nothing if stack is not deployed.&#xd;
+  <description>Undeploy aka delete {{stack}} in branch {{branch}}. Does nothing if stack is not deployed. You can run this job at any time, even if a deploy is currently in progress (in which case the deployment will be interrupted).&#xd;
 &#xd;
 Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{jobupdaterbuild}}.</description>
   <keepDependencies>false</keepDependencies>

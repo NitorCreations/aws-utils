@@ -15,15 +15,15 @@
 # limitations under the License.
 
 CF_paramSecretsBucket='nitor-infra-secure'
-CF_paramSecretFolder='Certs'
-CF_paramSecretUser="webmaster@nitorcreations.com"
+CF_paramSecretsFolder='Certs'
+CF_paramSecretsUser="webmaster@nitorcreations.com"
 
 
 logged_file=/dev/shm/fetch-secrets-logged
 
 login_if_not_already () {
   if [ ! -e $logged_file ]; then
-    s3-role-download.sh ${CF_paramSecretsBucket} webmaster.pwd - | lastpass-login.sh ${CF_paramSecretUser} -
+    s3-role-download.sh ${CF_paramSecretsBucket} webmaster.pwd - | lastpass-login.sh ${CF_paramSecretsUser} -
     touch $logged_file
   fi
 }
@@ -46,4 +46,4 @@ if [ "$1" = "logout" ]; then
 fi
 
 login_if_not_already
-lpass edit --sync=now --non-interactive --notes "Shared-${CF_paramSecretFolder}/$1" <&0
+lpass edit --sync=now --non-interactive --notes "Shared-${CF_paramSecretsFolder}/$1" <&0

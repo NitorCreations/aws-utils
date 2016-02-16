@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -xe
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -14,17 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ -z "$1" -o -z "$2" ]; then
-  echo "Usage: $0 <domain> <admin-email>"
+CF_paramSecretsBucket='nitor-infra-secure'
+
+if [ -z "$1" ]; then
+  echo "usage: $0 logout|<name>"
+  echo "   Secret must be given in stdin"
   exit 1
 fi
-PATH=/usr/sbin:/usr/bin:/sbin:/bin
-NOW=$(date +%s)
-TWO_WEEK_SEC=$((14 * 24 * 3600))
-MONTH_SEC=$((30 * 24 * 3600))
-ENDDATE=$(openssl x509 -in /etc/letsencrypt/live/$1/cert.pem -noout -enddate | cut -d= -f2)
-SEC=$(date --date="$ENDDATE" +%s)
-TIME_TO_RENEW=$(($SEC - $NOW))
-if [ $TIME_TO_RENEW -lt $TWO_WEEK_SEC ]; then
-  /opt/letsencrypt/letsencrypt-auto certonly --webroot -w "/var/www/$1" --agree-tos --email "$2" --renew-by-default -d "$1"
+
+if [ "$1" = "logout" ]; then
+  exit 0
 fi
+
+aws s3 cp - s3://${CF_paramSecretsBucket}/$1 <&0

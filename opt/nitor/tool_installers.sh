@@ -45,11 +45,6 @@ install_cftools() {
   pip install .
   cd ..
 }
-install_letsencrypt() {
-  rm -rf /opt/letsencrypt
-  git clone https://github.com/letsencrypt/letsencrypt /opt/letsencrypt
-  /opt/letsencrypt/letsencrypt-auto --help
-}
 install_maven() {
   wget -O - http://mirror.netinch.com/pub/apache/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz | tar -xzvf - -C /opt/
   ln -snf /opt/apache-maven-$MAVEN_VERSION /opt/maven

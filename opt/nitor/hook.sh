@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -23,8 +23,11 @@ find_longest_hosted_zone() {
   done | sort -n | tail -1 | cut -d" " -f2-
 }
 get_zone_id() {
-  local ZONE="$1"
-  aws route53 list-hosted-zones | jq -r ".HostedZones[]|select(.Name==\"$ZONE\").Id"
+  aws route53 list-hosted-zones | jq -r ".HostedZones[]|select(.Name==\"$1\").Id"
+}
+find_longest_hosted_zone_id() {
+  ZONE=$(find_longest_hosted_zone "$1")
+  get_zone_id $ZONE
 }
 
 execute_challenge_op() {
@@ -32,8 +35,7 @@ execute_challenge_op() {
   local DOMAIN="$2"
   local TOKEN_FILENAME="$3"
   local TOKEN_VALUE="$4"
-  ZONE=$(find_longest_hosted_zone $DOMAIN)
-  ZONE_ID=$(get_zone_id $ZONE)
+  ZONE_ID=$(find_longest_hosted_zone_id $DOMAIN)
 cat > challenge.json << MARKER
 {
   "Changes": [{
@@ -82,11 +84,10 @@ deploy_cert() {
   local CERTFILE="$3"
   local CHAINFILE="$4"
   s3-role-download.sh nitor-infra-secure webmaster.pwd - | lastpass-login.sh webmaster@nitorcreations.com -
-  lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.crt < $CERTFILE
-  lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.key.clear < $KEYFILE
-  lpass edit --non-interactive --notes Shared-Certs/$DOMAIN.chain < $CHAINFILE
-  lpass sync
-  lpass logout -f
-  rm -f $KEYFILE $CERTFILE $CHAINFILE
+  store-secret.sh $DOMAIN.crt < $CERTFILE
+  store-secret.sh $DOMAIN.key.clear < $KEYFILE
+  store-secret.sh $DOMAIN.chain < $CHAINFILE
+  store-secret.sh logout
+#  rm -f $KEYFILE $CERTFILE $CHAINFILE
 }
 HANDLER=$1; shift; $HANDLER $@

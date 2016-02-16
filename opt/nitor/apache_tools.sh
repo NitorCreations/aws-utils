@@ -15,7 +15,6 @@
 # limitations under the License.
 
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/aws_tools.sh"
 
 case  "$SYSTEM_TYPE" in
   ubuntu)
@@ -38,40 +37,20 @@ apache_replace_domain_vars () {
 perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }
 
 apache_install_certs () {
-  check_parameters APACHE_SSL_CONF CF_paramUseLetsencrypt CF_paramDnsName
-  if [ "${CF_paramUseLetsencrypt}" = "true" ]; then
-    check_parameters CF_paramAdminEmail CF_paramEip
-    aws_ec2_associate_address
-    generate-dummy-certs.sh ${CF_paramDnsName}
-    apache_enable_and_start_service
-    WEBROOT=/var/www/${CF_paramDnsName}
-    mkdir -p $WEBROOT/.well-known
-    local RETRIES=0
-    while ! /opt/letsencrypt/letsencrypt-auto certonly --webroot -w $WEBROOT --agree-tos --email "${CF_paramAdminEmail}" -d "${CF_paramDnsName}" &&  [ $RETRIES -lt 5 ]; do
-      RETRIES=$(($RETRIES + 1))
-      echo "Failed to get certs - retrying ($RETRIES)"
-      sleep 10
-    done
-    ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/cert.pem    $(perlgrep '^\s*SSLCertificateFile'      ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/privkey.pem $(perlgrep '^\s*SSLCertificateKeyFile'   ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    ln -snfv /etc/letsencrypt/live/${CF_paramDnsName}/chain.pem   $(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    cat >> /etc/cron.d/renew-letsencrypt << MARKER
-14 4 * * *   root /usr/bin/renew-letsencrypt.sh "${CF_paramDnsName}" "${CF_paramAdminEmail}" >> /var/log/renew-letsencrypt.log 2>&1
-MARKER
-    apache_reload_service
-  elif [ "${CF_paramUseLetsencrypt}" = "false" ]; then
-    DOMAIN=${CF_paramDnsName#*.}
-    (
-      perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
-      echo /etc/certs/$DOMAIN.chain
-    ) | sort -u | xargs /root/fetch-secrets.sh get 444
-    CONF_CHAIN=$(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
-    if [ "$CONF_CHAIN" != "/etc/certs/$DOMAIN.chain" ]; then
-      ln -snfv /etc/certs/$DOMAIN.chain $CONF_CHAIN
-    fi
+  check_parameters APACHE_SSL_CONF CF_paramDnsName
+  DOMAIN=${CF_paramDnsName#*.}
+  (
+    perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
+  ) | sort -u | xargs /root/fetch-secrets.sh get 444
+  CONF_CHAIN=$(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
+  if ! /root/fetch-secrets.sh get 444 "/etc/certs/${CF_paramDnsName}.chain"; then
+    /root/fetch-secrets.sh get 444 "/etc/certs/$DOMAIN.chain"
+    FETCHED_CHAIN="/etc/certs/$DOMAIN.chain"
   else
-    echo "Invalid parameter CF_paramUseLetsencrypt value '${CF_paramUseLetsencrypt}'"
-    exit 1
+    FETCHED_CHAIN="/etc/certs/${CF_paramDnsName}.chain"
+  fi
+  if [ "$CONF_CHAIN" != "$FETCHED_CHAIN" ]; then
+    ln -snfv "$FETCHED_CHAIN" "$CONF_CHAIN"
   fi
 }
 

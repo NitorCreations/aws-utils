@@ -14,10 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CF_paramSecretsBucket='nitor-infra-secure'
-CF_paramSecretFolder='Certs'
+CF_paramSecretsBucket="nitor-infra-secure"
 CF_paramSecretUser="webmaster@nitorcreations.com"
-
 
 logged_file=/dev/shm/fetch-secrets-logged
 
@@ -27,23 +25,40 @@ login_if_not_already () {
     touch $logged_file
   fi
 }
-logout() {
-  lpass sync
-  if [ -e $logged_file ]; then
-    lastpass-logout.sh
-    rm -f $logged_file
-  fi
-}
 
-if [ -z "$1" ]; then
-  echo "usage: $0 logout|<name>"
-  echo "   Secret must be given in stdin"
-  exit 1
-fi
-
-if [ "$1" = "logout" ]; then
-  logout
-fi
-
-login_if_not_already
-lpass edit --sync=now --non-interactive --notes "Shared-${CF_paramSecretFolder}/$1" <&0
+case "$1" in
+  login)
+    # usage: fetch-secrets.sh login
+    shift
+    login_if_not_already
+    ;;
+  get)
+    # usage: fetch-secrets.sh get <mode> [<file> ...] [--optional <file> ...]
+    # logs in automatically if necessary
+    shift
+    mode="$1"
+    shift
+    login_if_not_already
+    lastpass-fetch-notes.sh "$mode" "$@"
+    ;;
+  show)
+    shift
+    login_if_not_already
+    lpass show --password "$1"
+    ;;
+  logout)
+    # usage: fetch-secrets.sh logout
+    shift
+    if [ -e $logged_file ]; then
+      lastpass-logout.sh
+      rm -f $logged_file
+    fi
+    ;;
+  *)
+    # old api
+    s3-role-download.sh nitor-infra-secure webmaster.pwd .lpass-key
+    chmod 600 .lpass-key
+    lastpass-cert.sh "$@"
+    rm -f .lpass-key
+    ;;
+esac

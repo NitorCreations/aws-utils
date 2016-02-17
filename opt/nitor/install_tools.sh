@@ -17,7 +17,7 @@
 set -xe
 
 if [ -z "$1" ]; then
-  AWSUTILS_VERSION=0.51
+  AWSUTILS_VERSION=0.55
 else
   AWSUTILS_VERSION="$1"
 fi

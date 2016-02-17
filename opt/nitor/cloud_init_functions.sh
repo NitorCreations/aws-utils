@@ -73,8 +73,8 @@ onexit_sendlogs () {
 onexit () {
   echo -----------------------------------------------------------------
   set +e
-  if [ -x ./fetch-secrets.sh ]; then
-    ./fetch-secrets.sh logout
+  if [ -x /opt/nitor/fetch-secrets.sh ]; then
+    /opt/nitor/fetch-secrets.sh logout
   fi
   onexit_sendlogs
   aws --region "${CF_AWS__Region}" cloudformation signal-resource --stack-name ${CF_AWS__StackName} --logical-resource-id resourceAsg --unique-id $INSTANCE_ID --status $status

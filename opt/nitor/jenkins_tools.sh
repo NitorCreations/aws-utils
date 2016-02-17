@@ -20,7 +20,7 @@ jenkins_setup_dotssh () {
   check_parameters CF_paramDnsName
   mkdir -p /var/lib/jenkins/.ssh
   chmod 700 /var/lib/jenkins/.ssh
-  /root/fetch-secrets.sh get 400 /var/lib/jenkins/.ssh/${CF_paramDnsName}.rsa
+  /opt/nitor/fetch-secrets.sh get 400 /var/lib/jenkins/.ssh/${CF_paramDnsName}.rsa
   mv -v /var/lib/jenkins/.ssh/*.rsa /var/lib/jenkins/.ssh/id_rsa
   ssh-keygen -y -f /var/lib/jenkins/.ssh/id_rsa > /var/lib/jenkins/.ssh/id_rsa.pub
   chmod 400 /var/lib/jenkins/.ssh/id_rsa.pub
@@ -199,7 +199,7 @@ jenkins_discard_default_install () {
 }
 
 jenkins_fetch_additional_files () {
-  /root/fetch-secrets.sh get 400 ${CF_paramAdditionalFiles}
+  /opt/nitor/fetch-secrets.sh get 400 ${CF_paramAdditionalFiles}
   for i in ${CF_paramAdditionalFiles} ; do
     case "$i" in
       /var/lib/jenkins/*)

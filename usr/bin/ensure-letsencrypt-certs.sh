@@ -27,7 +27,7 @@ renew_cert() {
   letsencrypt.sh --cron --hook /opt/nitor/hook.sh --challenge dns-01 --domain "$DOMAIN"
 }
 
-if fetch-secrets.sh get 444 $CERT; then
+if /opt/nitor/fetch-secrets.sh get 444 $CERT; then
   VALID="$(openssl x509 -enddate -noout -in "$CERT" | cut -d= -f2- )"
   echo "Valid: $VALID"
   if ! openssl x509 -checkend $((RENEW_DAYS * 86400)) -noout -in "$CERT"; then

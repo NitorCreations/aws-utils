@@ -18,7 +18,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
 ssh_install_hostkeys () {
   check_parameters CF_paramDnsName
-  /root/fetch-secrets.sh get 500 --optional /etc/ssh/${CF_paramDnsName}-ssh-hostkeys.sh
+  /opt/nitor/fetch-secrets.sh get 500 --optional /etc/ssh/${CF_paramDnsName}-ssh-hostkeys.sh
   if [ -x /etc/ssh/${CF_paramDnsName}-ssh-hostkeys.sh ]; then
     /etc/ssh/${CF_paramDnsName}-ssh-hostkeys.sh
     # ssh is restarted later in the userdata script when elastic ip has been associated

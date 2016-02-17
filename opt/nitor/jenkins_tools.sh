@@ -267,7 +267,7 @@ jenkins_wait_service_up () {
   SERVER=""
   while [ $COUNT -lt 300 ] && [ "$SERVER" != "Jenkins" ]; do
     sleep 1
-    SERVER="$(curl -Ls http://localhost:8080 | egrep -o "Jenkins|getting ready" |sort -ru| tr -d '\n')"
+    SERVER="$(curl -sv http://localhost:8080 2>&1 | grep 'X-Jenkins:' | awk -NF'-|:' '{ print $2 }')"
     COUNT=$(($COUNT + 1))
   done
   if [ "$SERVER" != "Jenkins" ]; then

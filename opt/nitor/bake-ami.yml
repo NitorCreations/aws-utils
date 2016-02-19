@@ -90,6 +90,7 @@
         home: "{{ app_home }}"
         createhome: yes
     - shell: bash -c 'sleep 54m ; shutdown -P +1' &
+    - command: /bin/mkdir -m 755 -p /opt/nitor
     - copy: src="{{ workdir }}/{{ fetch_secrets }}" dest=/opt/nitor/fetch-secrets.sh owner=root group=root mode=0755
     - script: "{{ workdir }}/pre_install.sh"
     - apt_key: url="{{ item }}" state=present

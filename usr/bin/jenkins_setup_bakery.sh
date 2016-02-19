@@ -49,12 +49,17 @@ patchurl () {
   perl -pe 's!GIT_URL!'"${REPO_URL}"'!g;'
 }
 
+create_job () {
+  echo "Creating job $1 .."
+  cli create-job "$1"
+}
+  
 create_template_and_updater_jobs () {
-  patchcreds < ${TEMPLATE_PATH}/ramp-up-branch.xml                | patchurl | cli create-job "infra-ramp-up-branch"
-  patchcreds < ${TEMPLATE_PATH}/update-template-jobs-template.xml            | cli create-job "TEMPLATE {{prefix}}-update-template-jobs"
-  patchcreds < ${TEMPLATE_PATH}/deploy-stack-template.xml                    | cli create-job "TEMPLATE {{prefix}}-{{image}}-deploy-{{stack}}"
-  patchcreds < ${TEMPLATE_PATH}/undeploy-stack-template.xml                  | cli create-job "TEMPLATE {{prefix}}-{{image}}-undeploy-{{stack}}"
-  patchcreds < ${TEMPLATE_PATH}/bake-image-template.xml                      | cli create-job "TEMPLATE {{prefix}}-{{image}}-bake"
+  patchcreds < ${TEMPLATE_PATH}/ramp-up-branch.xml                | patchurl | create_job "infra-ramp-up-branch"
+  patchcreds < ${TEMPLATE_PATH}/update-template-jobs-template.xml            | create_job "TEMPLATE {{prefix}}-update-template-jobs"
+  patchcreds < ${TEMPLATE_PATH}/deploy-stack-template.xml                    | create_job "TEMPLATE {{prefix}}-{{image}}-deploy-{{stack}}"
+  patchcreds < ${TEMPLATE_PATH}/undeploy-stack-template.xml                  | create_job "TEMPLATE {{prefix}}-{{image}}-undeploy-{{stack}}"
+  patchcreds < ${TEMPLATE_PATH}/bake-image-template.xml                      | create_job "TEMPLATE {{prefix}}-{{image}}-bake"
 }
 
 check_roles () {

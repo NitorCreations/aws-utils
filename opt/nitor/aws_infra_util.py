@@ -54,14 +54,13 @@ def json_save(data):
 ############################################################################
 # import_scripts
 
-templateFile = None
 gotImportErrors = False
 
 # the CF_ prefix is expected already to have been stripped
 def bash_decode_parameter_name(name):
     return re.sub('__','::',name)
 
-def import_script(filename, params, template):
+def import_script(filename, template):
     VAR_DECL_RE = re.compile(r'^CF_([^\s=]+)=')
     arr = []
     with open(filename) as f:
@@ -70,11 +69,9 @@ def import_script(filename, params, template):
             if (result):
                 bashVarName = result.group(1)
                 varName = bash_decode_parameter_name(bashVarName)
-                if (not varName in params):
-                    print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
-                    gotImportErrors = True
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
+                ref['__source'] = filename
                 arr.append(line[0:result.end()] + "'")
                 arr.append(ref)
                 arr.append("'\n")
@@ -90,14 +87,21 @@ def resolve_file(file, basefile):
         base = "."
     return base + "/" + file
 
+def addParams(target, source, sourceProp):
+    if (sourceProp in source):
+        for k in source[sourceProp].iterkeys():
+            target.add(k)
+
 def get_params(data):
-    params = set(data['Parameters'].iterkeys()) if ("Parameters" in data) else set()
+    params = set()
     params.add("AWS::AccountId")
     params.add("AWS::NotificationARNs")
     params.add("AWS::NoValue")
     params.add("AWS::Region")
     params.add("AWS::StackId")
     params.add("AWS::StackName")
+    addParams(params, data, 'Parameters')
+    addParams(params, data, 'Resources')
     return params
 
 PARAM_REF_RE = re.compile(r'\(\(([^)]+)\)\)')
@@ -130,14 +134,13 @@ def apply_params(data, params):
     return data
 
 # returns new data
-def import_scripts_int(data, basefile, path="", params=None):
-    if (params is None):
-        params = get_params(data)
+def import_scripts_int(data, basefile, path):
+    global gotImportErrors
     if (isinstance(data, collections.OrderedDict)):
         if ('Fn::ImportFile' in data):
             v = data['Fn::ImportFile']
             data.clear()
-            contents = import_script(resolve_file(v, basefile), params, basefile)
+            contents = import_script(resolve_file(v, basefile), basefile)
             data['Fn::Join'] = [ "", contents ]
         elif ('Fn::ImportYaml' in data):
             v = data['Fn::ImportYaml']
@@ -148,11 +151,11 @@ def import_scripts_int(data, basefile, path="", params=None):
             data.clear()
             if (isinstance(contents, collections.OrderedDict)):
                 for k,v in contents.items():
-                    data[k] = import_scripts_int(v, file, path + k + "_", params)
+                    data[k] = import_scripts_int(v, file, path + k + "_")
             elif (isinstance(contents, list)):
                 data = contents
                 for i in range(0, len(data)):
-                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_", params)
+                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_")
             else:
                 print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
                 gotImportErrors = True
@@ -162,9 +165,9 @@ def import_scripts_int(data, basefile, path="", params=None):
                 print("ERROR: Fn::Merge must associate to a list in file " + basefile)
                 gotImportErrors = True
                 return data
-            data = import_scripts_int(mergeList[0], basefile, path + "0_", params)
+            data = import_scripts_int(mergeList[0], basefile, path + "0_")
             for i in range(1, len(mergeList)):
-                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_", params)
+                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_")
                 if (isinstance(data, collections.OrderedDict)):
                     if (not isinstance(merge, collections.OrderedDict)):
                         print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
@@ -184,27 +187,42 @@ def import_scripts_int(data, basefile, path="", params=None):
                     gotImportErrors = True
                     break
         elif ('Ref' in data):
-            varName = data['Ref']
-            if (not varName in params):
-                print("ERROR: Referenced parameter \"" + varName + "\" in file " + basefile + " not declared in template parameters in " + templateFile)
-                gotImportErrors = True
+            data['__source'] = basefile
         else:
             for k,v in data.items():
-                data[k] = import_scripts_int(v, basefile, path + k + "_", params)
+                data[k] = import_scripts_int(v, basefile, path + k + "_")
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_", params)
+            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_")
     return data
+            
+def verifyRefs(data, templateParams, templateFile):
+    global gotImportErrors
+    if (isinstance(data, collections.OrderedDict)):
+        if ('Ref' in data):
+            varName = data['Ref']
+            if (not varName in templateParams):
+                filename = data['__source']
+                print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
+                gotImportErrors = True
+            del data['__source']
+        else:
+            for k,v in data.items():
+                verifyRefs(v, templateParams, templateFile)
+    elif (isinstance(data, list)):
+        for i in range(0, len(data)):
+            verifyRefs(data[i], templateParams, templateFile)
 
 def import_scripts(data, basefile):
+    global gotImportErrors
     gotImportErrors = False
-    global templateFile
-    templateFile = basefile
-    ret = import_scripts_int(data, basefile)
-    templateFile = None
+
+    data = import_scripts_int(data, basefile, "")
+    verifyRefs(data, collectParams(data), basefile)
+
     if (gotImportErrors):
         sys.exit(1)
-    return ret
+    return data
 
 ############################################################################
 # extract_scripts

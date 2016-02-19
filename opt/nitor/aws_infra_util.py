@@ -54,6 +54,8 @@ def json_save(data):
 ############################################################################
 # import_scripts
 
+gotImportErrors = False
+
 # the CF_ prefix is expected already to have been stripped
 def bash_decode_parameter_name(name):
     return re.sub('__','::',name)
@@ -69,7 +71,7 @@ def import_script(filename, params, template):
                 varName = bash_decode_parameter_name(bashVarName)
                 if (not varName in params):
                     print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + template)
-                    sys.exit(1)
+                    gotImportErrors = True
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
                 arr.append(line[0:result.end()] + "'")
@@ -127,7 +129,7 @@ def apply_params(data, params):
     return data
 
 # returns new data
-def import_scripts(data, basefile, path="", params=None):
+def import_scripts_int(data, basefile, path="", params=None):
     if (params is None):
         params = get_params(data)
     if (isinstance(data, collections.OrderedDict)):
@@ -145,27 +147,33 @@ def import_scripts(data, basefile, path="", params=None):
             data.clear()
             if (isinstance(contents, collections.OrderedDict)):
                 for k,v in contents.items():
-                    data[k] = import_scripts(v, file, path + k + "_", params)
+                    data[k] = import_scripts_int(v, file, path + k + "_", params)
             elif (isinstance(contents, list)):
                 data = contents
                 for i in range(0, len(data)):
-                    data[i] = import_scripts(data[i], file, path + str(i) + "_", params)
+                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_", params)
             else:
-                print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array")
-                sys.exit(1)
+                print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list")
+                gotImportErrors = True
         elif ('Ref' in data):
             varName = data['Ref']
             if (not varName in params):
                 print("ERROR: Referenced parameter \"" + varName + "\" in file " + basefile + " not declared in template parameters in " + template)
-                sys.exit(1)
+                gotImportErrors = True
         else:
             for k,v in data.items():
-                data[k] = import_scripts(v, basefile, path + k + "_", params)
+                data[k] = import_scripts_int(v, basefile, path + k + "_", params)
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            data[i] = import_scripts(data[i], basefile, path + str(i) + "_", params)
+            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_", params)
     return data
 
+def import_scripts(data, basefile):
+    gotImportErrors = False
+    ret = import_scripts_int(data, basefile)
+    if (gotImportErrors):
+        sys.exit(1)
+    return ret
 
 ############################################################################
 # extract_scripts

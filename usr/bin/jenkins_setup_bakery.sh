@@ -38,7 +38,7 @@ xpath () {
 
 get_credentials_id_for_user () {
   user="$1" ; shift
-  xpath '//com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey[username/text()="'"$user"'"]/id/text()' /var/lib/jenkins/jenkins-home/credentials.xml
+  xpath '//com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey[username/text()="'"$user"'"]/id/text()' /var/lib/jenkins/jenkins-home/credentials.xml | fgrep -v -- -------
 }
 
 patchcreds () {
@@ -53,7 +53,7 @@ create_job () {
   echo "Creating job $1 .."
   cli create-job "$1"
 }
-  
+
 create_template_and_updater_jobs () {
   patchcreds < ${TEMPLATE_PATH}/ramp-up-branch.xml                | patchurl | create_job "infra-ramp-up-branch"
   patchcreds < ${TEMPLATE_PATH}/update-template-jobs-template.xml            | create_job "TEMPLATE {{prefix}}-update-template-jobs"
@@ -66,7 +66,7 @@ check_roles () {
   : # TODO check that the instance has the required policies
 }
 
-CREDENTIALS_ID="$$(set -e ; get_credentials_id_for_user "${JENKINS_USER}")"
+CREDENTIALS_ID="$(set -e ; get_credentials_id_for_user "${JENKINS_USER}")"
 
 if [ ! "${CREDENTIALS_ID}" ]; then
   echo "Could not find SSH credentials for user ${JENKINS_USER} in jenkins database"

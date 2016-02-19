@@ -198,6 +198,7 @@ def import_scripts_int(data, basefile, path="", params=None):
 
 def import_scripts(data, basefile):
     gotImportErrors = False
+    global templateFile
     templateFile = basefile
     ret = import_scripts_int(data, basefile)
     templateFile = None

@@ -54,6 +54,7 @@ def json_save(data):
 ############################################################################
 # import_scripts
 
+templateFile = None
 gotImportErrors = False
 
 # the CF_ prefix is expected already to have been stripped
@@ -70,7 +71,7 @@ def import_script(filename, params, template):
                 bashVarName = result.group(1)
                 varName = bash_decode_parameter_name(bashVarName)
                 if (not varName in params):
-                    print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + template)
+                    print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
                     gotImportErrors = True
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
@@ -153,12 +154,12 @@ def import_scripts_int(data, basefile, path="", params=None):
                 for i in range(0, len(data)):
                     data[i] = import_scripts_int(data[i], file, path + str(i) + "_", params)
             else:
-                print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list")
+                print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
                 gotImportErrors = True
         elif ('Fn::Merge' in data):
             mergeList = data['Fn::Merge']
             if (not isinstance(mergeList, list)):
-                print("ERROR: Fn::Merge must associate to a list")
+                print("ERROR: Fn::Merge must associate to a list in file " + basefile)
                 gotImportErrors = True
                 return data
             data = import_scripts_int(mergeList[0], basefile, path + "0_", params)
@@ -166,7 +167,7 @@ def import_scripts_int(data, basefile, path="", params=None):
                 merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_", params)
                 if (isinstance(data, collections.OrderedDict)):
                     if (not isinstance(merge, collections.OrderedDict)):
-                        print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge))
+                        print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
                         gotImportErrors = True
                     else:
                         for k,v in merge.items():
@@ -185,7 +186,7 @@ def import_scripts_int(data, basefile, path="", params=None):
         elif ('Ref' in data):
             varName = data['Ref']
             if (not varName in params):
-                print("ERROR: Referenced parameter \"" + varName + "\" in file " + basefile + " not declared in template parameters in " + template)
+                print("ERROR: Referenced parameter \"" + varName + "\" in file " + basefile + " not declared in template parameters in " + templateFile)
                 gotImportErrors = True
         else:
             for k,v in data.items():
@@ -197,7 +198,9 @@ def import_scripts_int(data, basefile, path="", params=None):
 
 def import_scripts(data, basefile):
     gotImportErrors = False
+    templateFile = basefile
     ret = import_scripts_int(data, basefile)
+    templateFile = None
     if (gotImportErrors):
         sys.exit(1)
     return ret

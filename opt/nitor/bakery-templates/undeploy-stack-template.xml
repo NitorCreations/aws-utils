@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='UTF-8'?>
 <!--
  Copyright 2016 Nitor Creations Oy
 
@@ -13,7 +14,6 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
   <description>Undeploy aka delete {{stack}} in branch {{branch}}. Does nothing if stack is not deployed. You can run this job at any time, even if a deploy is currently in progress (in which case the deployment will be interrupted).&#xd;

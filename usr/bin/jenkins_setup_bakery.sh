@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-JENKINS_USER="$1" ; shift
-REPO_URL="$1" ; shift
+JENKINS_USER="$1"
+REPO_URL="$2"
 
-if [ $# != 0 -o ! "$JENKINS_USER" -o ! "$REPO_URL" ]; then
+if [ $# != 2 -o ! "$JENKINS_USER" -o ! "$REPO_URL" ]; then
   echo "usage: $0 <jenkins-git-credentials> <infra-repo-url>"
   exit 1
 fi
@@ -25,6 +25,9 @@ fi
 OPT_NITOR_PATH="$(dirname "$0")/../../opt/nitor"
 TEMPLATE_PATH="${OPT_NITOR_PATH}/bakery-templates"
 
+cd /tmp/ # the template_tools script creates a temp directory under current dir
+
+source "${TEMPLATE_PATH}/template_tools.sh"
 source "${OPT_NITOR_PATH}/jenkins_tools.sh"
 
 xpath () {
@@ -55,13 +58,13 @@ create_template_and_updater_jobs () {
 }
 
 check_roles () {
-  # TODO check that the instance has the required policies
+  : # TODO check that the instance has the required policies
 }
 
 CREDENTIALS_ID="$$(set -e ; get_credentials_id_for_user "${JENKINS_USER}")"
 
 if [ ! "${CREDENTIALS_ID}" ]; then
-  echo "Could not find SSH credentials for user ${JENKINS_USER}"
+  echo "Could not find SSH credentials for user ${JENKINS_USER} in jenkins database"
   exit 1
 fi
 

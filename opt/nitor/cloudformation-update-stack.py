@@ -119,7 +119,7 @@ def deploy(stack_name, yaml_template):
     for key in template_parameters.keys():
         if (key in os.environ):
             val = os.environ[key]
-            print("Parameter " + key + ": using custom value " + val)
+            print("Parameter " + key + ": using \033[32;1mCUSTOM value " + val + "\033[m")
             params_doc.append({ 'ParameterKey': key, 'ParameterValue': val })
         else:
             val = template_parameters[key]['Default']

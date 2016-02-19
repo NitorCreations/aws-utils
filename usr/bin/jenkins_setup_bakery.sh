@@ -16,10 +16,9 @@
 
 JENKINS_USER="$1" ; shift
 REPO_URL="$1" ; shift
-PREFIX="$1" ; shift
 
-if [ $# != 0 -o ! "$JENKINS_USER" ]; then
-  echo "usage: $0 <jenkins-git-credentials> <infra-repo-url> <prefix>"
+if [ $# != 0 -o ! "$JENKINS_USER" -o ! "$REPO_URL" ]; then
+  echo "usage: $0 <jenkins-git-credentials> <infra-repo-url>"
   exit 1
 fi
 
@@ -39,45 +38,20 @@ get_credentials_id_for_user () {
   xpath '//com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey[username/text()="'"$user"'"]/id/text()' /var/lib/jenkins/jenkins-home/credentials.xml
 }
 
-create_template_and_updater_jobs () {
-  perl -pe 's!PREFIX!'"${PREFIX}"'!g; s!GIT_URL!'"${REPO_URL}"'!g; s!CREDENTIALS_ID!'"${CREDENTIALS_ID}"'!g;' \
-       < ${TEMPLATE_PATH}/update-template-jobs.xml \
-    | cli create-job "${PREFIX}-update-template-jobs"
-  perl -pe 's!CREDENTIALS_ID!'"${CREDENTIALS_ID}"'!g;' \
-       < ${TEMPLATE_PATH}/deploy-stack-template.xml \
-    | cli create-job "TEMPLATE ${PREFIX}-{{image}}-deploy-{{stack}}"
-  perl -pe 's!CREDENTIALS_ID!'"${CREDENTIALS_ID}"'!g;' \
-       < ${TEMPLATE_PATH}/bake-image-template.xml \
-    | cli create-job "TEMPLATE ${PREFIX}-{{image}}-bake"
+patchcreds () {
+  perl -pe 's!CREDENTIALS_ID!'"${CREDENTIALS_ID}"'!g;'
 }
 
-create_aws_view () {
-  if ! cli get-view AWS >/dev/null 2>&1 ; then
-    cli create-view <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<hudson.model.ListView>
-  <name>${PREFIX^^}</name>
-  <filterExecutors>false</filterExecutors>
-  <filterQueue>false</filterQueue>
-  <properties class="hudson.model.View\$PropertyList"/>
-  <jobNames>
-    <comparator class="hudson.util.CaseInsensitiveComparator"/>
-  </jobNames>
-  <jobFilters/>
-  <columns>
-    <hudson.views.StatusColumn/>
-    <hudson.views.WeatherColumn/>
-    <hudson.views.JobColumn/>
-    <hudson.views.LastSuccessColumn/>
-    <hudson.views.LastFailureColumn/>
-    <hudson.views.LastDurationColumn/>
-    <hudson.views.BuildButtonColumn/>
-  </columns>
-  <includeRegex>(?:TEMPLATE )?${PREFIX}-.*</includeRegex>
-  <recurse>false</recurse>
-</hudson.model.ListView>
-EOF
-  fi
+patchurl () {
+  perl -pe 's!GIT_URL!'"${REPO_URL}"'!g;'
+}
+
+create_template_and_updater_jobs () {
+  patchcreds < ${TEMPLATE_PATH}/ramp-up-branch.xml                | patchurl | cli create-job "infra-ramp-up-branch"
+  patchcreds < ${TEMPLATE_PATH}/update-template-jobs-template.xml            | cli create-job "TEMPLATE {{prefix}}-update-template-jobs"
+  patchcreds < ${TEMPLATE_PATH}/deploy-stack-template.xml                    | cli create-job "TEMPLATE {{prefix}}-{{image}}-deploy-{{stack}}"
+  patchcreds < ${TEMPLATE_PATH}/undeploy-stack-template.xml                  | cli create-job "TEMPLATE {{prefix}}-{{image}}-undeploy-{{stack}}"
+  patchcreds < ${TEMPLATE_PATH}/bake-image-template.xml                      | cli create-job "TEMPLATE {{prefix}}-{{image}}-bake"
 }
 
 check_roles () {
@@ -92,6 +66,5 @@ if [ ! "${CREDENTIALS_ID}" ]; then
 fi
 
 create_template_and_updater_jobs
-create_aws_view
 
 check_roles

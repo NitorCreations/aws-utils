@@ -218,7 +218,7 @@ def import_scripts(data, basefile):
     gotImportErrors = False
 
     data = import_scripts_int(data, basefile, "")
-    verifyRefs(data, collectParams(data), basefile)
+    verifyRefs(data, get_params(data), basefile)
 
     if (gotImportErrors):
         sys.exit(1)

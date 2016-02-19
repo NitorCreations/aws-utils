@@ -155,6 +155,33 @@ def import_scripts_int(data, basefile, path="", params=None):
             else:
                 print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list")
                 gotImportErrors = True
+        elif ('Fn::Merge' in data):
+            mergeList = data['Fn::Merge']
+            if (not isinstance(mergeList, list)):
+                print("ERROR: Fn::Merge must associate to a list")
+                gotImportErrors = True
+                return data
+            data = import_scripts_int(mergeList[0], basefile, path + "0_", params)
+            for i in range(1, len(mergeList)):
+                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_", params)
+                if (isinstance(data, collections.OrderedDict)):
+                    if (not isinstance(merge, collections.OrderedDict)):
+                        print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge))
+                        gotImportErrors = True
+                    else:
+                        for k,v in merge.items():
+                            data[k] = v
+                elif (isinstance(data, list)):
+                    if (not isinstance(merge, list)):
+                        print("ERROR: First Fn::Merge entry was a list, but entry " + str(i) + " was not a list: " + str(merge))
+                        gotImportErrors = True
+                    else:
+                        for k in range(0, len(merge)):
+                            data.append(merge[k])
+                else:
+                    print("ERROR: Unsupported " + str(type(data)))
+                    gotImportErrors = True
+                    break
         elif ('Ref' in data):
             varName = data['Ref']
             if (not varName in params):

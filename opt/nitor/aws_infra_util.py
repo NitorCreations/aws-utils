@@ -153,6 +153,11 @@ def import_scripts(data, basefile, path="", params=None):
             else:
                 print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array")
                 sys.exit(1)
+        elif ('Ref' in data):
+            varName = data['Ref']
+            if (not varName in params):
+                print("ERROR: Referenced parameter \"" + varName + "\" in file " + basefile + " not declared in template parameters in " + template)
+                sys.exit(1)
         else:
             for k,v in data.items():
                 data[k] = import_scripts(v, basefile, path + k + "_", params)

@@ -1,0 +1,31 @@
+#!/bin/bash
+
+unset SSH_AUTH_SOCK
+unset SSH_AGENT_PID
+cleanup() {
+  rm -f $TMP
+  if [ -n "$SSH_AGENT_PID" ]; then
+    eval $(ssh-agent -k)
+  fi
+}
+trap cleanup EXIT
+
+if  [ "$1" = "-k" ]; then
+  shift
+  KEY_NAME=$1
+  shift
+else
+  TMP=$(mktemp)
+  if ! lpass show --notes my-ssh-mappings > $TMP; then
+    echo "Failed to get mappings"
+    exit 1
+  fi
+  if ! egrep "^$1:" $TMP > /dev/null; then
+    echo "$1 mapping not found"
+    exit 1
+  fi
+  KEY_NAME=$(egrep "^$1:" $TMP | cut -d: -f2-)
+fi
+eval "$(ssh-agent)"
+lpass show --notes $KEY_NAME | ssh-add -
+ssh "$@"

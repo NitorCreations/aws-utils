@@ -21,13 +21,16 @@ You need to have the tools installed as above
  ```
  The login supports most 2nd factor tools you may have configured.
 
-You then need to have a mapping note in lastpass that tells the tool which key to
-use for which username/host combination. Here is an example:
+You then need to have a mapping secure note called ```my-ssh-mappings```
+in lastpass that tells the tool which key to use for which username/host
+combination. Here is an example:
+
 ```
 ubuntu@bob.nitor.zone:nitor-infra.rsa
 centos@inside.nitor.zone:nitor-infra.rsa
 centos@hours.nitor.zone:nitor-infra.rsa
 ```
+
 There is one mapping per line and the format is ```[user]@[host]:[keyname]```
 
 Then the tools supports tab completion to fill in the arguments.

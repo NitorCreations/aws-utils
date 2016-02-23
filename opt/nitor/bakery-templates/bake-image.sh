@@ -32,12 +32,14 @@ export APP_HOME APP_USER AWSUTILS_VERSION AWS_KEY_NAME
 SSH_USER=$IMAGETYPE
 $WORKSPACE/aws-utils/bake-ami.sh $AMIID $IMAGETYPE $SSH_USER ../../fetch-secrets.sh
 
-echo "--------------------- Share to ${SHARE_REGIONS}"
-for region in ${SHARE_REGIONS//,/ } ; do
-  var_region_accounts=REGION_${region//-/_}_ACCOUNTS
-  if [ ! "${!var_region_accounts}" ]; then
-    echo "Missing setting '${var_region_accounts}' in ${infrapropfile}"
-    exit 1
-  fi
-  $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
-done
+if [ -n "${SHARE_REGIONS}" ]; then
+  echo "--------------------- Share to ${SHARE_REGIONS}"
+  for region in ${SHARE_REGIONS//,/ } ; do
+    var_region_accounts=REGION_${region//-/_}_ACCOUNTS
+    if [ ! "${!var_region_accounts}" ]; then
+      echo "Missing setting '${var_region_accounts}' in ${infrapropfile}"
+      exit 1
+    fi
+    $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
+  done
+fi

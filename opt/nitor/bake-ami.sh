@@ -19,11 +19,13 @@ set -xe
 DIR=$(cd $(dirname $0); pwd -P)
 TSTAMP=$(date +%Y%m%d%H%M%S)
 cleanup() {
-  ssh-agent -k
+  eval $(ssh-agent -k)
 }
-if [ -r ./settings.sh ]; then
-  source ./settings.sh
-fi
+
+infrapropfile="infra-${GIT_BRANCH##*/}.properties"
+for PROFILE_DIR in "../.." "."; do
+  [ -e "$PROFILE_DIR/${infrapropfile}" ] && source "$PROFILE_DIR/${infrapropfile}"
+done
 if [ -z "$AWS_KEY_NAME" ]; then
   AWS_KEY_NAME=nitor-intra
 fi
@@ -40,7 +42,7 @@ else
   exit 1
 fi
 if [ -z "$AWSUTILS_VERSION" ]; then
-  AWSUTILS_VERSION=0.57
+  AWSUTILS_VERSION=0.58
 fi
 if [ -z "$BUILD_NUMBER" ]; then
   BUILD_NUMBER=$TSTAMP
@@ -108,7 +110,8 @@ if python -u $(which ansible-playbook) -vvvv --flush-cache -i $DIR/inventory $DI
   -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
   "${extra_args[@]}" -e root_ami=$AMI -e tstamp=$TSTAMP \
   -e aws_region=$REGION -e ansible_ssh_user=$SSH_USER \
-  -e workdir="$(pwd -P)" -e fetch_secrets=$FETCH_SECRETS ; then
+  -e workdir="$(pwd -P)" -e fetch_secrets=$FETCH_SECRETS \
+  -e subnet_id=$SUBNET -e sg_id=$SECURITY_GROUP; then
 
   echo "AMI_ID=$(cat $WORKSPACE/ami-id.txt)" > $WORKSPACE/ami.properties
   echo "NAME=$(cat $WORKSPACE/name.txt)" >> $WORKSPACE/ami.properties

@@ -27,9 +27,9 @@
         exact_count: 0
         instance_type: t2.medium
         image: "{{ root_ami }}"
-        vpc_subnet_id: subnet-4c0e0338
+        vpc_subnet_id: "{{ subnet_id }}"
         assign_public_ip: yes
-        group_id: sg-6f67950b
+        group_id: "{{ sg_id }}"
         monitoring: no
         key_name: "{{ aws_key_name }}"
         wait: yes
@@ -49,9 +49,9 @@
         instance_type: t2.medium
         image: "{{ root_ami }}"
         instance_profile_name: "amibake-role"
-        vpc_subnet_id: subnet-4c0e0338
+        vpc_subnet_id: "{{ subnet_id }}"
         assign_public_ip: yes
-        group_id: sg-6f67950b
+        group_id: "{{ sg_id }}"
         monitoring: no
         key_name: "{{ aws_key_name }}"
         volumes:
@@ -152,9 +152,9 @@
         exact_count: 0
         instance_type: t2.medium
         image: "{{ root_ami }}"
-        vpc_subnet_id: subnet-4c0e0338
+        vpc_subnet_id: "{{ subnet_id }}"
         assign_public_ip: yes
-        group_id: sg-6f67950b
+        group_id: "{{ sg_id }}"
         monitoring: no
         key_name: "{{ aws_key_name }}"
         wait: no

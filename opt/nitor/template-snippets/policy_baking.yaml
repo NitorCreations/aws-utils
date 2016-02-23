@@ -35,6 +35,7 @@ PolicyDocument:
     - 'rds:DescribeDBInstances'
     - 'sts:AssumeRole'
     - 'ec2:DescribeVpcs'
+    - 'sts:DecodeAuthorizationMessage'
   - Effect: Allow
     Resource: {'Fn::GetAtt': [ resourceBakeRole, Arn ]}
     Action:

@@ -28,6 +28,8 @@ if [ -z "$AWS_KEY_NAME" ]; then
   AWS_KEY_NAME=nitor-intra
 fi
 eval $(ssh-agent)
+if [ -r "$HOME/.ssh/$AWS_KEY_NAME" ]; then
+  ssh-add "$HOME/.ssh/$AWS_KEY_NAME"
 if [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
   ssh-add "$HOME/.ssh/$AWS_KEY_NAME.pem"
 elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.rsa" ]; then

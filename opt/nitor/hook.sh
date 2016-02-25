@@ -83,7 +83,6 @@ deploy_cert() {
   local KEYFILE="$2"
   local CERTFILE="$3"
   local CHAINFILE="$4"
-  s3-role-download.sh nitor-infra-secure webmaster.pwd - | lastpass-login.sh webmaster@nitorcreations.com -
   /opt/nitor/store-secret.sh $DOMAIN.crt < $CERTFILE
   /opt/nitor/store-secret.sh $DOMAIN.key.clear < $KEYFILE
   /opt/nitor/store-secret.sh $DOMAIN.chain < $CHAINFILE

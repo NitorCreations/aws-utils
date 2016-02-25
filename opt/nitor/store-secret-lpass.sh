@@ -43,6 +43,7 @@ fi
 
 if [ "$1" = "logout" ]; then
   logout
+  exit 0
 fi
 
 login_if_not_already

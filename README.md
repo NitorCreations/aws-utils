@@ -33,7 +33,6 @@ centos@hours.nitor.zone:nitor-infra.rsa
 
 There is one mapping per line and the format is ```[user]@[host]:[keyname]```
 
-Then the tools supports tab completion to fill in the arguments.
 
 ```
 usage: lpssh [-k keyname] <user>@<host>
@@ -45,3 +44,9 @@ bypassing the mapping note.
 The tool will then find the correct key, start a private ssh-agent for the session
 and adds the key via stdin (the key is never stored on your computer). After the
 ssh session ends, the script will kill the ssh-agent used for the authentication.
+
+## Autocomplete
+
+The tools supports tab completion to fill in the arguments.
+
+Add ```source /opt/nitor/lpssh-autocomplete.sh``` to your ```.bashrc```

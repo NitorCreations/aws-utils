@@ -20,7 +20,11 @@ if [ -z "$1" ]; then
 fi
 DOMAIN="$1"
 RENEW_DAYS="30"
-CERT=/etc/certs/$DOMAIN.crt
+if [ -z "$CERT_DIR" ]; then
+  CERT_DIR=/etc/certs
+fi
+
+CERT=$CERT_DIR/$DOMAIN.crt
 
 renew_cert() {
   local DOMAIN="$1"

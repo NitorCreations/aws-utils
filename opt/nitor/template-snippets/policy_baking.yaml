@@ -32,6 +32,7 @@ PolicyDocument:
     - 'ec2:ModifyImageAttribute'
     - 'ec2:RunInstances'
     - 'ec2:TerminateInstances'
+    - 'cloudformation:DescribeStacks'
     - 'rds:DescribeDBInstances'
     - 'sts:AssumeRole'
     - 'ec2:DescribeVpcs'

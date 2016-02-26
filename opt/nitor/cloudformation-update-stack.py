@@ -28,30 +28,12 @@ def deploy(stack_name, yaml_template):
     # Disable buffering, from http://stackoverflow.com/questions/107705/disable-output-buffering
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-    # Assume amibakery role
-
-    p = subprocess.Popen(['aws', 'sts', 'assume-role', '--role-arn', 'arn:aws:iam::832585949989:role/amibakery', '--role-session-name', 'amibakery-deploy'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    output = p.communicate()
-    if p.returncode:
-       sys.exit("Assume role failed: " + output[1])
-
-    # AWS Credentials
-
-    credentials = aws_infra_util.json_load(output[0])
-    aws_access_key_id = credentials['Credentials']['AccessKeyId']
-    aws_secret_access_key = credentials['Credentials']['SecretAccessKey']
-    aws_session_token = credentials['Credentials']['SessionToken']
-
     # Get AMI metadata
 
     describe_ami_command = [ "aws", "ec2", "describe-images", "--image-ids", os.environ["paramAmi"] ]
     print("Checking AMI " + os.environ["paramAmi"] + " metadata: " + str(describe_ami_command))
     p = subprocess.Popen(describe_ami_command,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                         env=dict(os.environ,
-                                  AWS_ACCESS_KEY_ID=aws_access_key_id,
-                                  AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
-                                  AWS_SESSION_TOKEN=aws_session_token))
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     output = p.communicate()
     if p.returncode:
         sys.exit("Failed to retrieve ami metadata for " + os.environm["paramAmi"])
@@ -94,11 +76,7 @@ def deploy(stack_name, yaml_template):
     describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
     print("Checking for previous stack info: " + str(describe_stack_command))
     p = subprocess.Popen(describe_stack_command,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                         env=dict(os.environ,
-                                  AWS_ACCESS_KEY_ID=aws_access_key_id,
-                                  AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
-                                  AWS_SESSION_TOKEN=aws_session_token))
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     output = p.communicate()
     if p.returncode:
         if (not output[1].endswith("does not exist\n")):
@@ -140,11 +118,7 @@ def deploy(stack_name, yaml_template):
 
     print(stack_oper + ": " + str(stack_command))
     p = subprocess.Popen(stack_command,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                         env=dict(os.environ,
-                                  AWS_ACCESS_KEY_ID=aws_access_key_id,
-                                  AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
-                                  AWS_SESSION_TOKEN=aws_session_token))
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     output = p.communicate()
     os.remove(tmp.name)
     if p.returncode:
@@ -160,11 +134,7 @@ def deploy(stack_name, yaml_template):
     print("Waiting for " + stack_oper + " to complete:")
     while (True):
         p = subprocess.Popen(describe_stack_command,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                             env=dict(os.environ,
-                                      AWS_ACCESS_KEY_ID=aws_access_key_id,
-                                      AWS_SECRET_ACCESS_KEY=aws_secret_access_key,
-                                      AWS_SESSION_TOKEN=aws_session_token))
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         output = p.communicate()
         if p.returncode:
             sys.exit("Describe stack failed: " + output[1])

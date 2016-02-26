@@ -39,6 +39,7 @@ PolicyDocument:
     - 'ec2:DescribeVpcs'
     - 'sts:DecodeAuthorizationMessage'
     - 'iam:UpdateAssumeRolePolicy'
+    - 'iam:PutRolePolicy'
   - Effect: Allow
     Resource: {'Fn::GetAtt': [ resourceBakeRole, Arn ]}
     Action:

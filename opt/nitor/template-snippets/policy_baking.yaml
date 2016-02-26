@@ -37,6 +37,7 @@ PolicyDocument:
     - 'rds:DescribeDBInstances'
     - 'sts:AssumeRole'
     - 'ec2:DescribeVpcs'
+    - 'ec2:AuthorizeSecurityGroupIngress'
     - 'sts:DecodeAuthorizationMessage'
     - 'iam:UpdateAssumeRolePolicy'
     - 'iam:PutRolePolicy'

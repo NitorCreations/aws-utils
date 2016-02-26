@@ -23,20 +23,20 @@ import collections
 import time
 import datetime
 
-def deploy(stack_name, yaml_template):
+def deploy(stack_name, yaml_template, region):
 
     # Disable buffering, from http://stackoverflow.com/questions/107705/disable-output-buffering
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
     # Get AMI metadata
 
-    describe_ami_command = [ "aws", "ec2", "describe-images", "--image-ids", os.environ["paramAmi"] ]
+    describe_ami_command = [ "aws", "ec2", "describe-images", "--region", region, "--image-ids", os.environ["paramAmi"] ]
     print("Checking AMI " + os.environ["paramAmi"] + " metadata: " + str(describe_ami_command))
     p = subprocess.Popen(describe_ami_command,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     output = p.communicate()
     if p.returncode:
-        sys.exit("Failed to retrieve ami metadata for " + os.environm["paramAmi"])
+        sys.exit("Failed to retrieve ami metadata for " + os.environ["paramAmi"])
 
     ami_meta = aws_infra_util.json_load(output[0])
     print("Result: " + aws_infra_util.json_save(ami_meta))
@@ -73,7 +73,7 @@ def deploy(stack_name, yaml_template):
 
     # Load previous stack information to see if it has been deployed before
 
-    describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
+    describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', "--region", region, '--stack-name', stack_name ]
     print("Checking for previous stack info: " + str(describe_stack_command))
     p = subprocess.Popen(describe_stack_command,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -104,7 +104,7 @@ def deploy(stack_name, yaml_template):
             print("Parameter " + key + ": using default value " + val)
 
     stack_command = \
-        ['aws', 'cloudformation', stack_oper, '--stack-name',
+        ['aws', 'cloudformation', stack_oper, "--region", region, '--stack-name',
          stack_name,
          '--template-body',
          'file://' + tmp.name,
@@ -155,6 +155,6 @@ def deploy(stack_name, yaml_template):
     print("Done!")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        sys.exit("Usage: deploy.py stack_name yaml_template\nParameters taken from environment as-is, missing parameters use defaults from template")
-    deploy(sys.argv[1], sys.argv[2])
+    if len(sys.argv) != 4:
+        sys.exit("Usage: deploy.py stack_name yaml_template region\nParameters taken from environment as-is, missing parameters use defaults from template")
+    deploy(sys.argv[1], sys.argv[2], sys.argv[3])

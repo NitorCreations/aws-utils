@@ -31,7 +31,8 @@ source "${infrapropfile}"
 [ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
 
 if [ ! "$AMI_ID" ]; then
-  AMI_ID="$(curl -fs "http://localhost:8080/job/${imagejob}/lastSuccessfulBuild/artifact/ami-id.txt")"
+  REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
+  AMI_ID="$(aws ec2 describe-images --region=$REGION --owners=self | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${imagejob}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
   if [ ! "$AMI_ID" ]; then
     echo "AMI_ID job parameter not defined and value could not be determined from parent bake job - aborting"
     exit 1

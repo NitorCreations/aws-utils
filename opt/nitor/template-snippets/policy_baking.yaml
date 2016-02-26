@@ -41,6 +41,7 @@ PolicyDocument:
     - 'iam:UpdateAssumeRolePolicy'
     - 'iam:PutRolePolicy'
     - 'iam:DeleteRolePolicy'
+    - 'iam:GetRole'
   - Effect: Allow
     Resource: {'Fn::GetAtt': [ resourceBakeRole, Arn ]}
     Action:

@@ -33,6 +33,7 @@ PolicyDocument:
     - 'ec2:RunInstances'
     - 'ec2:TerminateInstances'
     - 'cloudformation:DescribeStacks'
+    - 'cloudformation:UpdateStack'
     - 'rds:DescribeDBInstances'
     - 'sts:AssumeRole'
     - 'ec2:DescribeVpcs'

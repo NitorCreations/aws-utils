@@ -32,7 +32,8 @@ source "${infrapropfile}"
 
 if [ ! "$AMI_ID" ]; then
   REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
-  AMI_ID="$(aws ec2 describe-images --region=$REGION --owners=self | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${imagejob}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
+  JOB=$(echo $imagejob | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
+  AMI_ID="$(aws ec2 describe-images --region=$REGION --owners=self | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${JOB}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
   if [ ! "$AMI_ID" ]; then
     echo "AMI_ID job parameter not defined and value could not be determined from parent bake job - aborting"
     exit 1

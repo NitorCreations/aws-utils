@@ -154,7 +154,8 @@ def deploy(stack_name, yaml_template, region):
     if ((stack_oper == "create-stack" and status != "CREATE_COMPLETE") or (stack_oper == "update-stack" and status != "UPDATE_COMPLETE")):
         sys.exit(stack_oper + " failed: end state " + status)
     else:
-        f = open('outputs.json', 'w')
+        template_dir = os.path.dirname(yaml_template)
+        f = open(template_dir + '/outputs.json', 'w')
         json.dump(stack_info['Stacks'][0]['Outputs'], f, indent=4)
         f.close()
 

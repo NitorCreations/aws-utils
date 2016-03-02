@@ -22,6 +22,7 @@ import tempfile
 import collections
 import time
 import datetime
+import json
 
 def deploy(stack_name, yaml_template, region):
 
@@ -29,21 +30,22 @@ def deploy(stack_name, yaml_template, region):
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
     # Get AMI metadata
+    ami_id = os.getenv('paramAmi', '')
+    if ami_id != "":
+        describe_ami_command = [ "aws", "ec2", "describe-images", "--region", region, "--image-ids", ami_id ]
+        print("Checking AMI " + ami_id + " metadata: " + str(describe_ami_command))
+        p = subprocess.Popen(describe_ami_command,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        output = p.communicate()
+        if p.returncode:
+            sys.exit("Failed to retrieve ami metadata for " + ami_id)
 
-    describe_ami_command = [ "aws", "ec2", "describe-images", "--region", region, "--image-ids", os.environ["paramAmi"] ]
-    print("Checking AMI " + os.environ["paramAmi"] + " metadata: " + str(describe_ami_command))
-    p = subprocess.Popen(describe_ami_command,
-                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    output = p.communicate()
-    if p.returncode:
-        sys.exit("Failed to retrieve ami metadata for " + os.environ["paramAmi"])
+        ami_meta = aws_infra_util.json_load(output[0])
+        print("Result: " + aws_infra_util.json_save(ami_meta))
+        os.environ["paramAmiName"] = ami_meta['Images'][0]['Name']
+        os.environ["paramAmiCreated"] = ami_meta['Images'][0]['CreationDate']
 
-    ami_meta = aws_infra_util.json_load(output[0])
-    print("Result: " + aws_infra_util.json_save(ami_meta))
-    os.environ["paramAmiName"] = ami_meta['Images'][0]['Name']
-    os.environ["paramAmiCreated"] = ami_meta['Images'][0]['CreationDate']
-
-    print("\n\n**** Deploying stack '" + stack_name + "' with template '" + yaml_template + "' and ami_id " + os.environ["paramAmi"])
+    print("\n\n**** Deploying stack '" + stack_name + "' with template '" + yaml_template + "' and ami_id '" + ami_id + "'")
 
     # Load yaml template and import scripts and patch userdata with metadata hash & params
 

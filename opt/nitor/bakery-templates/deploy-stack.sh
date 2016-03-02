@@ -16,10 +16,16 @@
 
 set -xe
 
+has_ami_parameter() {
+  aws-utils/yaml_to_json.py "${image}/stack-${ORIG_STACK_NAME}/template.yaml" | jq -e .Parameters.paramAmi > /dev/null
+}
+
 image="$1" ; shift
 ORIG_STACK_NAME="$1" ; shift
-AMI_ID="$1" ; shift
-imagejob="$1" ; shift
+AMI_ID="$1"
+shift ||:
+imagejob="$1"
+shift ||:
 
 # by default, prefix stack name with branch name, to avoid accidentally using same names in different branches - override in infra-<branch>.properties to your liking. STACK_NAME and ORIG_STACK_NAME can be assumed to exist.
 STACK_NAME="${GIT_BRANCH##*/}-${ORIG_STACK_NAME}"
@@ -32,7 +38,7 @@ source "${infrapropfile}"
 [ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
 [ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
 
-if [ ! "$AMI_ID" ]; then
+if [ ! "$AMI_ID" ] && has_ami_parameter; then
   JOB=$(echo $imagejob | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
   AMI_ID="$(aws ec2 describe-images --region=$REGION --owners=self | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${JOB}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
   if [ ! "$AMI_ID" ]; then

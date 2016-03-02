@@ -15,15 +15,42 @@
 # limitations under the License.
 
 import yaml
+import subprocess
 import json
 import sys
 import collections
 import re
 import os
 
+def get_branch():
+    return os.getenv('GIT_BRANCH', subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()[0].split()[0])
+
+def parse_infrafile(infrafile):
+    with open(infrafile) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            k, v = line.split('=', 1)
+            v = v.strip("'").strip('"')
+            yield k, v
+
+def resolve_region(template):
+    branch = get_branch()
+    template_dir = os.path.dirname(os.path.abspath(template))
+    image_dir = os.path.dirname(os.path.abspath(template_dir))
+    infra_dir = os.path.dirname(os.path.abspath(image_dir))
+    props = [os.path.join(infra_dir, "infra-" + branch + ".properties"), os.path.join(image_dir, "infra-" + branch + ".properties"), os.path.join(template_dir, "infra-" + branch + ".properties")]
+    region = "eu-west-1"
+    for infrafile in props:
+        if os.path.exists(infrafile):
+            for k, v in parse_infrafile(infrafile):
+                if k == "REGION":
+                    region =  v
+    return region
+
 ############################################################################
 # _THE_ yaml & json deserialize/serialize functions
-
 def yaml_load(stream, Loader=yaml.SafeLoader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
         pass
@@ -134,7 +161,7 @@ def apply_params(data, params):
     return data
 
 # returns new data
-def import_scripts_int(data, basefile, path):
+def import_scripts_int(data, basefile, path, region):
     global gotImportErrors
     if (isinstance(data, collections.OrderedDict)):
         if ('Fn::ImportFile' in data):
@@ -151,11 +178,11 @@ def import_scripts_int(data, basefile, path):
             data.clear()
             if (isinstance(contents, collections.OrderedDict)):
                 for k,v in contents.items():
-                    data[k] = import_scripts_int(v, file, path + k + "_")
+                    data[k] = import_scripts_int(v, file, path + k + "_", region)
             elif (isinstance(contents, list)):
                 data = contents
                 for i in range(0, len(data)):
-                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_")
+                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_", region)
             else:
                 print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
                 gotImportErrors = True
@@ -165,9 +192,9 @@ def import_scripts_int(data, basefile, path):
                 print("ERROR: Fn::Merge must associate to a list in file " + basefile)
                 gotImportErrors = True
                 return data
-            data = import_scripts_int(mergeList[0], basefile, path + "0_")
+            data = import_scripts_int(mergeList[0], basefile, path + "0_", region)
             for i in range(1, len(mergeList)):
-                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_")
+                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_", region)
                 if (isinstance(data, collections.OrderedDict)):
                     if (not isinstance(merge, collections.OrderedDict)):
                         print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
@@ -186,16 +213,38 @@ def import_scripts_int(data, basefile, path):
                     print("ERROR: Unsupported " + str(type(data)))
                     gotImportErrors = True
                     break
+        elif ('StackRef' in data):
+            stack_var = data['StackRef'].split('.', 2)
+            data.clear()
+            stack_name = stack_var[0]
+            stack_param = stack_var[1]
+            describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', "--region", region, '--stack-name', stack_name ]
+            p = subprocess.Popen(describe_stack_command,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+            output = p.communicate()
+            if p.returncode:
+                sys.exit("Describe stack failed: " + output[1])
+            stack_info = json_load(output[0])
+            for input_var in  stack_info['Stacks'][0]['Parameters']:
+                if input_var['ParameterKey'] == stack_param:
+                    data = input_var['ParameterValue']
+                    break
+            for output_var in stack_info['Stacks'][0]['Outputs']:
+                if output_var['OutputKey'] == stack_param:
+                    data = output_var['OutputValue']
+                    break
+            if not data:
+                sys.exit("Did not find value for: " + stack_param + " in stack " + stack_name)
         elif ('Ref' in data):
             data['__source'] = basefile
         else:
             for k,v in data.items():
-                data[k] = import_scripts_int(v, basefile, path + k + "_")
+                data[k] = import_scripts_int(v, basefile, path + k + "_", region)
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_")
+            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_", region)
     return data
-            
+
 def verifyRefs(data, templateParams, templateFile):
     global gotImportErrors
     if (isinstance(data, collections.OrderedDict)):
@@ -217,7 +266,7 @@ def import_scripts(data, basefile):
     global gotImportErrors
     gotImportErrors = False
 
-    data = import_scripts_int(data, basefile, "")
+    data = import_scripts_int(data, basefile, "", resolve_region(basefile))
     verifyRefs(data, get_params(data), basefile)
 
     if (gotImportErrors):

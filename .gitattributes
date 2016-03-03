@@ -7,3 +7,4 @@
 /.githooks/pre-commit   licensefile=.githooks/license-maintainer/LICENSE-hash
 /opt/nitor/inventory/*  -licensefile
 /opt/nitor/library/*    -licensefile
+/usr/bin/letsencrypt.sh -licensefile

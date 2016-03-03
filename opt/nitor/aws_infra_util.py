@@ -92,21 +92,23 @@ def resolve_file(file, basefile):
         base = "."
     return base + "/" + file
 
-def addParams(target, source, sourceProp):
+PARAM_NOT_AVAILABLE = "N/A"
+
+def addParams(target, source, sourceProp, useValue):
     if (sourceProp in source):
-        for k in source[sourceProp].iterkeys():
-            target.add(k)
+        for k,v in source[sourceProp].items():
+            target[k] = v if useValue else PARAM_NOT_AVAILABLE;
 
 def get_params(data):
-    params = set()
-    params.add("AWS::AccountId")
-    params.add("AWS::NotificationARNs")
-    params.add("AWS::NoValue")
-    params.add("AWS::Region")
-    params.add("AWS::StackId")
-    params.add("AWS::StackName")
-    addParams(params, data, 'Parameters')
-    addParams(params, data, 'Resources')
+    params = dict()
+    params["AWS::AccountId"] = PARAM_NOT_AVAILABLE
+    params["AWS::NotificationARNs"] = PARAM_NOT_AVAILABLE
+    params["AWS::NoValue"] = PARAM_NOT_AVAILABLE
+    params["AWS::Region"] = PARAM_NOT_AVAILABLE
+    params["AWS::StackId"] = PARAM_NOT_AVAILABLE
+    params["AWS::StackName"] = PARAM_NOT_AVAILABLE
+    addParams(params, data, 'Parameters', True)
+    addParams(params, data, 'Resources', False)
     return params
 
 PARAM_REF_RE = re.compile(r'\(\(([^)]+)\)\)')
@@ -139,7 +141,7 @@ def apply_params(data, params):
     return data
 
 # returns new data
-def import_scripts_int(data, basefile, path):
+def import_scripts_pass1(data, basefile, path):
     global gotImportErrors
     if (isinstance(data, collections.OrderedDict)):
         if ('Fn::ImportFile' in data):
@@ -156,11 +158,11 @@ def import_scripts_int(data, basefile, path):
             data.clear()
             if (isinstance(contents, collections.OrderedDict)):
                 for k,v in contents.items():
-                    data[k] = import_scripts_int(v, file, path + k + "_")
+                    data[k] = import_scripts_pass1(v, file, path + k + "_")
             elif (isinstance(contents, list)):
                 data = contents
                 for i in range(0, len(data)):
-                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_")
+                    data[i] = import_scripts_pass1(data[i], file, path + str(i) + "_")
             else:
                 print("ERROR: " + path + ": Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
                 gotImportErrors = True
@@ -170,9 +172,9 @@ def import_scripts_int(data, basefile, path):
                 print("ERROR: " + path + ": Fn::Merge must associate to a list in file " + basefile)
                 gotImportErrors = True
                 return data
-            data = import_scripts_int(mergeList[0], basefile, path + "0_")
+            data = import_scripts_pass1(mergeList[0], basefile, path + "0_")
             for i in range(1, len(mergeList)):
-                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_")
+                merge = import_scripts_pass1(mergeList[i], basefile, path + str(i) + "_")
                 if (isinstance(data, collections.OrderedDict)):
                     if (not isinstance(merge, collections.OrderedDict)):
                         print("ERROR: " + path + ": First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
@@ -191,8 +193,33 @@ def import_scripts_int(data, basefile, path):
                     print("ERROR: " + path + ": Unsupported " + str(type(data)))
                     gotImportErrors = True
                     break
+        elif ('Ref' in data):
+            data['__source'] = basefile
+        else:
+            for k,v in data.items():
+                data[k] = import_scripts_pass1(v, basefile, path + k + "_", region)
+    elif (isinstance(data, list)):
+        for i in range(0, len(data)):
+            data[i] = import_scripts_pass1(data[i], basefile, path + str(i) + "_", region)
+    return data
+
+# returns new data
+def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
+    global gotImportErrors
+    if (isinstance(data, collections.OrderedDict)):
+        if ('Ref' in data):
+            varName = data['Ref']
+            if (not varName in templateParams):
+                filename = data['__source']
+                print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
+                gotImportErrors = True
+            else:
+                if (resolveRefs):
+                    data = templateParams[varName]
+                else:
+                    del data['__source']
         elif ('StackRef' in data):
-            stack_var = import_scripts_int(data['StackRef'], basefile, path + "stackref_")
+            stack_var = import_scripts_pass2(data['StackRef'], templateFile, path + "StackRef_", True)
             data.clear()
             region = stack_var['region']
             stack_name = stack_var['stackName']
@@ -214,39 +241,20 @@ def import_scripts_int(data, basefile, path):
                     break
             if not data:
                 sys.exit("Did not find value for: " + stack_param + " in stack " + stack_name)
-        elif ('Ref' in data):
-            data['__source'] = basefile
         else:
             for k,v in data.items():
-                data[k] = import_scripts_int(v, basefile, path + k + "_")
+                data[k] = import_scripts_pass2(v, templateFile, path + k + "_", templateParams, resolveRefs)
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_")
+            data[i] = import_scripts_pass2(data[i], templateFile, path + str(i) + "_", templateParams, resolveRefs)
     return data
-
-def verifyRefs(data, templateParams, templateFile):
-    global gotImportErrors
-    if (isinstance(data, collections.OrderedDict)):
-        if ('Ref' in data):
-            varName = data['Ref']
-            if (not varName in templateParams):
-                filename = data['__source']
-                print("ERROR: Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
-                gotImportErrors = True
-            del data['__source']
-        else:
-            for k,v in data.items():
-                verifyRefs(v, templateParams, templateFile)
-    elif (isinstance(data, list)):
-        for i in range(0, len(data)):
-            verifyRefs(data[i], templateParams, templateFile)
 
 def import_scripts(data, basefile):
     global gotImportErrors
     gotImportErrors = False
 
-    data = import_scripts_int(data, basefile, "")
-    verifyRefs(data, get_params(data), basefile)
+    data = import_scripts_pass1(data, basefile, "")
+    data = import_scripts_pass2(data, basefile, "", get_params(data), False)
 
     if (gotImportErrors):
         sys.exit(1)

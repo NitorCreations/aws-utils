@@ -62,7 +62,7 @@ def decode_parameter_name(name):
 
 def import_script(filename, template):
     # the "var " prefix is to support javascript as well
-    VAR_DECL_RE = re.compile(r'^(\h*var\h+)?CF_([^\s=]+)=')
+    VAR_DECL_RE = re.compile(r'^(\s*var\s+)?CF_([^\s=]+)=')
     arr = []
     with open(filename) as f:
         for line in f:

@@ -101,14 +101,40 @@ def addParams(target, source, sourceProp, useValue):
 
 def get_params(data):
     params = dict()
+
+    # first load defaults for all parameters in "Parameters"
+    addParams(params, data, 'Parameters', True)
+
+    # then override them with values from infra
+    template_dir = os.path.dirname(os.path.abspath(template))
+    image_dir = os.path.dirname(template_dir)
+    infra_dir = os.path.dirname(image_dir)
+    
+    imageName = os.path.basename(image_dir)
+    stackName = os.path.basename(template_dir)
+    stackName = re.sub('^stack-', '', stackName)
+
+    get_vars_command = [ 'env', '-i', 'bash', '-c', 'source aws-utils/source_infra_properties.sh "' + imageName + '" "' + stackName + '" ; set' ]
+    p = subprocess.Popen(get_vars_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    output = p.communicate()
+    if p.returncode:
+        sys.exit("Failed to retrieve infra*.properties")
+
+    for line in output[0].split('\n'):
+        k, v = line.split('=', 1)
+        if (k in params):
+            v = v.strip("'").strip('"')
+            params[k] = v
+
+    # finally load AWS-provided and "Resources"
     params["AWS::AccountId"] = PARAM_NOT_AVAILABLE
     params["AWS::NotificationARNs"] = PARAM_NOT_AVAILABLE
     params["AWS::NoValue"] = PARAM_NOT_AVAILABLE
     params["AWS::Region"] = PARAM_NOT_AVAILABLE
     params["AWS::StackId"] = PARAM_NOT_AVAILABLE
     params["AWS::StackName"] = PARAM_NOT_AVAILABLE
-    addParams(params, data, 'Parameters', True)
     addParams(params, data, 'Resources', False)
+
     return params
 
 PARAM_REF_RE = re.compile(r'\(\(([^)]+)\)\)')
@@ -209,13 +235,16 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
     if (isinstance(data, collections.OrderedDict)):
         if ('Ref' in data):
             varName = data['Ref']
+            filename = data['__source']
             if (not varName in templateParams):
-                filename = data['__source']
                 print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
                 gotImportErrors = True
             else:
                 if (resolveRefs):
                     data = templateParams[varName]
+                    if (data == PARAM_NOT_AVAILABLE):
+                        print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " is resolved later by AWS; cannot resolve its value now")
+                        gotImportErrors = True
                 else:
                     del data['__source']
         elif ('StackRef' in data):

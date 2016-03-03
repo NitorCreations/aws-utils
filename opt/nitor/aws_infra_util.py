@@ -162,12 +162,12 @@ def import_scripts_int(data, basefile, path):
                 for i in range(0, len(data)):
                     data[i] = import_scripts_int(data[i], file, path + str(i) + "_")
             else:
-                print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
+                print("ERROR: " + path + ": Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
                 gotImportErrors = True
         elif ('Fn::Merge' in data):
             mergeList = data['Fn::Merge']
             if (not isinstance(mergeList, list)):
-                print("ERROR: Fn::Merge must associate to a list in file " + basefile)
+                print("ERROR: " + path + ": Fn::Merge must associate to a list in file " + basefile)
                 gotImportErrors = True
                 return data
             data = import_scripts_int(mergeList[0], basefile, path + "0_")
@@ -175,20 +175,20 @@ def import_scripts_int(data, basefile, path):
                 merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_")
                 if (isinstance(data, collections.OrderedDict)):
                     if (not isinstance(merge, collections.OrderedDict)):
-                        print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
+                        print("ERROR: " + path + ": First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
                         gotImportErrors = True
                     else:
                         for k,v in merge.items():
                             data[k] = v
                 elif (isinstance(data, list)):
                     if (not isinstance(merge, list)):
-                        print("ERROR: First Fn::Merge entry was a list, but entry " + str(i) + " was not a list: " + str(merge))
+                        print("ERROR: " + path + ": First Fn::Merge entry was a list, but entry " + str(i) + " was not a list: " + str(merge))
                         gotImportErrors = True
                     else:
                         for k in range(0, len(merge)):
                             data.append(merge[k])
                 else:
-                    print("ERROR: Unsupported " + str(type(data)))
+                    print("ERROR: " + path + ": Unsupported " + str(type(data)))
                     gotImportErrors = True
                     break
         elif ('StackRef' in data):

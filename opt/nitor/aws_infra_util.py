@@ -214,10 +214,10 @@ def import_scripts_int(data, basefile, path):
             data['__source'] = basefile
         else:
             for k,v in data.items():
-                data[k] = import_scripts_int(v, basefile, path + k + "_", region)
+                data[k] = import_scripts_int(v, basefile, path + k + "_")
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_", region)
+            data[i] = import_scripts_int(data[i], basefile, path + str(i) + "_")
     return data
 
 def verifyRefs(data, templateParams, templateFile):

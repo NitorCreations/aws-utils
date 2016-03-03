@@ -22,33 +22,6 @@ import collections
 import re
 import os
 
-def get_branch():
-    return os.getenv('GIT_BRANCH', subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True).communicate()[0].split()[0])
-
-def parse_infrafile(infrafile):
-    with open(infrafile) as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith('#') or '=' not in line:
-                continue
-            k, v = line.split('=', 1)
-            v = v.strip("'").strip('"')
-            yield k, v
-
-def resolve_region(template):
-    branch = get_branch()
-    template_dir = os.path.dirname(os.path.abspath(template))
-    image_dir = os.path.dirname(os.path.abspath(template_dir))
-    infra_dir = os.path.dirname(os.path.abspath(image_dir))
-    props = [os.path.join(infra_dir, "infra-" + branch + ".properties"), os.path.join(image_dir, "infra-" + branch + ".properties"), os.path.join(template_dir, "infra-" + branch + ".properties")]
-    region = "eu-west-1"
-    for infrafile in props:
-        if os.path.exists(infrafile):
-            for k, v in parse_infrafile(infrafile):
-                if k == "REGION":
-                    region =  v
-    return region
-
 ############################################################################
 # _THE_ yaml & json deserialize/serialize functions
 def yaml_load(stream, Loader=yaml.SafeLoader, object_pairs_hook=collections.OrderedDict):
@@ -162,7 +135,7 @@ def apply_params(data, params):
     return data
 
 # returns new data
-def import_scripts_int(data, basefile, path, region):
+def import_scripts_int(data, basefile, path):
     global gotImportErrors
     if (isinstance(data, collections.OrderedDict)):
         if ('Fn::ImportFile' in data):
@@ -179,11 +152,11 @@ def import_scripts_int(data, basefile, path, region):
             data.clear()
             if (isinstance(contents, collections.OrderedDict)):
                 for k,v in contents.items():
-                    data[k] = import_scripts_int(v, file, path + k + "_", region)
+                    data[k] = import_scripts_int(v, file, path + k + "_")
             elif (isinstance(contents, list)):
                 data = contents
                 for i in range(0, len(data)):
-                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_", region)
+                    data[i] = import_scripts_int(data[i], file, path + str(i) + "_")
             else:
                 print("ERROR: Can't import yaml file \"" + file + "\" that isn't an associative array or a list in file " + basefile)
                 gotImportErrors = True
@@ -193,9 +166,9 @@ def import_scripts_int(data, basefile, path, region):
                 print("ERROR: Fn::Merge must associate to a list in file " + basefile)
                 gotImportErrors = True
                 return data
-            data = import_scripts_int(mergeList[0], basefile, path + "0_", region)
+            data = import_scripts_int(mergeList[0], basefile, path + "0_")
             for i in range(1, len(mergeList)):
-                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_", region)
+                merge = import_scripts_int(mergeList[i], basefile, path + str(i) + "_")
                 if (isinstance(data, collections.OrderedDict)):
                     if (not isinstance(merge, collections.OrderedDict)):
                         print("ERROR: First Fn::Merge entry was an object, but entry " + str(i) + " was not an object: " + str(merge) + " in file " + basefile)
@@ -215,10 +188,11 @@ def import_scripts_int(data, basefile, path, region):
                     gotImportErrors = True
                     break
         elif ('StackRef' in data):
-            stack_var = data['StackRef'].split('.', 2)
+            stack_var = import_scripts_int(data['StackRef'], basefile, path + "stackref_")
             data.clear()
-            stack_name = stack_var[0]
-            stack_param = stack_var[1]
+            region = stack_var['region']
+            stack_name = stack_var['stackName']
+            stack_param = stack_var['paramName']
             describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', "--region", region, '--stack-name', stack_name ]
             p = subprocess.Popen(describe_stack_command,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -267,7 +241,7 @@ def import_scripts(data, basefile):
     global gotImportErrors
     gotImportErrors = False
 
-    data = import_scripts_int(data, basefile, "", resolve_region(basefile))
+    data = import_scripts_int(data, basefile, "")
     verifyRefs(data, get_params(data), basefile)
 
     if (gotImportErrors):

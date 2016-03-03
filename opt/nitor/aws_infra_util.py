@@ -109,7 +109,7 @@ def get_params(data):
     template_dir = os.path.dirname(os.path.abspath(template))
     image_dir = os.path.dirname(template_dir)
     infra_dir = os.path.dirname(image_dir)
-    
+
     imageName = os.path.basename(image_dir)
     stackName = os.path.basename(template_dir)
     stackName = re.sub('^stack-', '', stackName)
@@ -223,10 +223,10 @@ def import_scripts_pass1(data, basefile, path):
             data['__source'] = basefile
         else:
             for k,v in data.items():
-                data[k] = import_scripts_pass1(v, basefile, path + k + "_", region)
+                data[k] = import_scripts_pass1(v, basefile, path + k + "_")
     elif (isinstance(data, list)):
         for i in range(0, len(data)):
-            data[i] = import_scripts_pass1(data[i], basefile, path + str(i) + "_", region)
+            data[i] = import_scripts_pass1(data[i], basefile, path + str(i) + "_")
     return data
 
 # returns new data

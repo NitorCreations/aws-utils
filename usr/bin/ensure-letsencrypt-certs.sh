@@ -28,6 +28,8 @@ CERT=$CERT_DIR/$DOMAIN.crt
 
 renew_cert() {
   local DOMAIN="$1"
+  echo "LOCKFILE=$CERT_DIR/lock" > $CERT_DIR/conf
+  export CONFIG="$CERT_DIR/conf"
   letsencrypt.sh --cron --hook /opt/nitor/hook.sh --challenge dns-01 --domain "$DOMAIN"
 }
 

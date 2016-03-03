@@ -76,7 +76,7 @@ def import_script(filename, template):
                 ref['__source'] = filename
                 arr.append(line[0:result.end()] + "'")
                 arr.append(ref)
-                if (len(jsPrefix) > 0):
+                if (jsPrefix):
                     arr.append("';\n")
                 else:
                     arr.append("'\n")
@@ -97,9 +97,9 @@ PARAM_NOT_AVAILABLE = "N/A"
 def addParams(target, source, sourceProp, useValue):
     if (sourceProp in source):
         for k,v in source[sourceProp].items():
-            target[k] = v if useValue else PARAM_NOT_AVAILABLE;
+            target[k] = v['Default'] if useValue else PARAM_NOT_AVAILABLE;
 
-def get_params(data):
+def get_params(data, template):
     params = dict()
 
     # first load defaults for all parameters in "Parameters"
@@ -121,10 +121,12 @@ def get_params(data):
         sys.exit("Failed to retrieve infra*.properties")
 
     for line in output[0].split('\n'):
-        k, v = line.split('=', 1)
-        if (k in params):
-            v = v.strip("'").strip('"')
-            params[k] = v
+        line = line.strip()
+        if (line):
+            k, v = line.split('=', 1)
+            if (k in params):
+                v = v.strip("'").strip('"')
+                params[k] = v
 
     # finally load AWS-provided and "Resources"
     params["AWS::AccountId"] = PARAM_NOT_AVAILABLE
@@ -248,7 +250,7 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
                 else:
                     del data['__source']
         elif ('StackRef' in data):
-            stack_var = import_scripts_pass2(data['StackRef'], templateFile, path + "StackRef_", True)
+            stack_var = import_scripts_pass2(data['StackRef'], templateFile, path + "StackRef_", templateParams, True)
             data.clear()
             region = stack_var['region']
             stack_name = stack_var['stackName']
@@ -283,7 +285,7 @@ def import_scripts(data, basefile):
     gotImportErrors = False
 
     data = import_scripts_pass1(data, basefile, "")
-    data = import_scripts_pass2(data, basefile, "", get_params(data), False)
+    data = import_scripts_pass2(data, basefile, "", get_params(data, basefile), False)
 
     if (gotImportErrors):
         sys.exit(1)

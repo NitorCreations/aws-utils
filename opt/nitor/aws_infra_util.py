@@ -88,7 +88,8 @@ def bash_decode_parameter_name(name):
     return re.sub('__','::',name)
 
 def import_script(filename, template):
-    VAR_DECL_RE = re.compile(r'^CF_([^\s=]+)=')
+    # the "var " prefix is to support javascript as well
+    VAR_DECL_RE = re.compile(r'^(?:\h*var\h+)?CF_([^\s=]+)=')
     arr = []
     with open(filename) as f:
         for line in f:

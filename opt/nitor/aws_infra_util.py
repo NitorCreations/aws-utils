@@ -57,25 +57,29 @@ def json_save(data):
 gotImportErrors = False
 
 # the CF_ prefix is expected already to have been stripped
-def bash_decode_parameter_name(name):
+def decode_parameter_name(name):
     return re.sub('__','::',name)
 
 def import_script(filename, template):
     # the "var " prefix is to support javascript as well
-    VAR_DECL_RE = re.compile(r'^(?:\h*var\h+)?CF_([^\s=]+)=')
+    VAR_DECL_RE = re.compile(r'^(\h*var\h+)?CF_([^\s=]+)=')
     arr = []
     with open(filename) as f:
         for line in f:
             result = VAR_DECL_RE.match(line)
             if (result):
-                bashVarName = result.group(1)
-                varName = bash_decode_parameter_name(bashVarName)
+                jsPrefix = result.group(1)
+                encodedVarName = result.group(2)
+                varName = decode_parameter_name(encodedVarName)
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
                 ref['__source'] = filename
                 arr.append(line[0:result.end()] + "'")
                 arr.append(ref)
-                arr.append("'\n")
+                if (len(jsPrefix) > 0):
+                    arr.append("';\n")
+                else:
+                    arr.append("'\n")
             else:
                 arr.append(line)
     return arr

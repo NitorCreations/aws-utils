@@ -17,16 +17,9 @@
 set -xe
 
 image="$1" ; shift
-ORIG_STACK_NAME="$1" ; shift
+stackName="$1" ; shift
 
-# by default, prefix stack name with branch name, to avoid accidentally using same names in different branches - override in infra-<branch>.properties to your liking. STACK_NAME and ORIG_STACK_NAME can be assumed to exist.
-STACK_NAME="${GIT_BRANCH##*/}-${ORIG_STACK_NAME}"
-
-infrapropfile="infra-${GIT_BRANCH##*/}.properties"
-
-source "${infrapropfile}"
-[ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
-[ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
+source aws-utils/source_infra_properties.sh "$image" "$stackName"
 
 #export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra-<branch>.properties files
 #export paramAmi=$AMI_ID

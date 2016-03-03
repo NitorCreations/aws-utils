@@ -21,22 +21,13 @@ has_ami_parameter() {
 }
 
 image="$1" ; shift
-ORIG_STACK_NAME="$1" ; shift
+stackName="$1" ; shift
 AMI_ID="$1"
 shift ||:
 imagejob="$1"
 shift ||:
 
-# by default, prefix stack name with branch name, to avoid accidentally using same names in different branches - override in infra-<branch>.properties to your liking. STACK_NAME and ORIG_STACK_NAME can be assumed to exist.
-STACK_NAME="${GIT_BRANCH##*/}-${ORIG_STACK_NAME}"
-
-infrapropfile="infra-${GIT_BRANCH##*/}.properties"
-
-REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
-
-source "${infrapropfile}"
-[ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
-[ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
+source aws-utils/source_infra_properties.sh "$image" "$stackName"
 
 if [ ! "$AMI_ID" ] && has_ami_parameter; then
   JOB=$(echo $imagejob | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')

@@ -105,14 +105,10 @@ create_view () {
   cli create-view < "$new_view_file"
 }
 
-infrapropfile="infra-${GIT_BRANCH##*/}.properties"
-
-# usage get_var <name> [<imagedir> [<stackdir>]]
+# usage get_var <name> [<imagename> [<stackname>]]
 get_var () {
   (
-    source "${infrapropfile}"
-    [ ! "$2" -o ! -r "$2/${infrapropfile}" ] || source "$2/${infrapropfile}"
-    [ ! "$3" -o ! -r "$3/${infrapropfile}" ] || source "$3/${infrapropfile}"
+    source "${BASH_SOURCE[0]}/../source_infra_properties.sh" "$2" "$3"
     echo -n "${!1}"
   )
 }

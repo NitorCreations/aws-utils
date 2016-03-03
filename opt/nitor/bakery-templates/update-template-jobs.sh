@@ -42,8 +42,8 @@ for imagebasedir in * ; do
     if [ -d "${stackdir}" ]; then
       stackname="$(set -e ; basename "${stackdir}")"
       stackname="${stackname#stack-}"
-      manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackdir}")"
-      disable_undeploy="$(set -e ; get_var DISABLE_UNDEPLOY "${imagebasedir}" "${stackdir}")"
+      manual_deploy="$(set -e ; get_var MANUAL_DEPLOY "${imagebasedir}" "${stackname}")"
+      disable_undeploy="$(set -e ; get_var DISABLE_UNDEPLOY "${imagebasedir}" "${stackname}")"
       stack_vars=( stack="${stackname}" imagejob="${new_image_job}" )
 
       # prepare

@@ -16,10 +16,8 @@
 
 set -ex
 
-infrapropfile="infra-${GIT_BRANCH##*/}.properties"
-
 source "$(dirname "$0")/template_tools.sh"
-source "${infrapropfile}"
+source "$(dirname "$0")/../source_infra_properties.sh" "" ""
 
 rampuptime="$(date "+%F %T %Z")"
 update_template="TEMPLATE {{prefix}}-update-template-jobs"

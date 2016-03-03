@@ -18,19 +18,99 @@ set -xe
 
 image="$1" ; shift
 
-infrapropfile="infra-${GIT_BRANCH##*/}.properties"
+source aws-utils/source_infra_properties.sh "$image" ""
 
-source "${infrapropfile}"
-[ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
-
-VAR_AMIID="AMIID_${IMAGETYPE}"
-AMIID="${!VAR_AMIID}"
-
-# Bake
 cd ${image}/image
-export APP_HOME APP_USER AWSUTILS_VERSION AWS_KEY_NAME
+
+VAR_AMI="AMIID_${IMAGETYPE}"
+AMI="${!VAR_AMI}"
+
 SSH_USER=$IMAGETYPE
-$WORKSPACE/aws-utils/bake-ami.sh $AMIID $IMAGETYPE $SSH_USER ../../fetch-secrets.sh
+FETCH_SECRETS=../../fetch-secrets.sh
+
+DIR=$(cd $(dirname $0)/..; pwd -P)
+TSTAMP=$(date +%Y%m%d%H%M%S)
+cleanup() {
+  eval $(ssh-agent -k)
+}
+
+if [ -z "$AWS_KEY_NAME" ]; then
+  AWS_KEY_NAME=nitor-intra
+fi
+eval $(ssh-agent)
+if [ -r "$HOME/.ssh/$AWS_KEY_NAME" ]; then
+  ssh-add "$HOME/.ssh/$AWS_KEY_NAME"
+elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
+  ssh-add "$HOME/.ssh/$AWS_KEY_NAME.pem"
+elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.rsa" ]; then
+  ssh-add "$HOME/.ssh/$AWS_KEY_NAME.rsa"
+else
+  echo "Failed to find ssh private key"
+  cleanup
+  exit 1
+fi
+if [ -z "$AWSUTILS_VERSION" ]; then
+  AWSUTILS_VERSION=0.58
+fi
+if [ -z "$BUILD_NUMBER" ]; then
+  BUILD_NUMBER=$TSTAMP
+else
+  BUILD_NUMBER=$(printf "%04d\n" $BUILD_NUMBER)
+fi
+if [ -z "$WORKSPACE" ]; then
+  WORKSPACE=$DIR
+fi
+if [ -z "$JOB_NAME" ]; then
+  JOB_NAME="bake-$(basename $(cd ..; pwd))"
+fi
+if ! [ -r ./pre_install.sh ]; then
+  echo -e "#!/bin/bash\n\nexit 0" > ./pre_install.sh
+fi
+if ! [ -r ./post_install.sh ]; then
+  echo -e "#!/bin/bash\n\nexit 0" > ./post_install.sh
+fi
+touch ./packages.txt
+PACKAGES="$($DIR/list-file-to-json.py packages ./packages.txt)"
+if [ "$IMAGETYPE" = "ubuntu" ]; then
+  touch ./repos.txt ./keys.txt
+  REPOS="$($DIR/list-file-to-json.py repos ./repos.txt)"
+  KEYS="$($DIR/list-file-to-json.py keys ./keys.txt)"
+  extra_args=( -e "$REPOS" -e "$KEYS" )
+else
+  extra_args=( -e '{"repos": []}' -e '{"keys": []}' )
+fi
+
+JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
+[ "${REGION}" ]
+NAME="${JOB}_$BUILD_NUMBER"
+AMI_TAG="$NAME"
+echo "$AMI_TAG" > $WORKSPACE/ami-tag.txt
+echo "$NAME" > $WORKSPACE/name.txt
+
+ANSIBLE_FORCE_COLOR=true
+ANSIBLE_HOST_KEY_CHECKING=false
+export ANSIBLE_FORCE_COLOR ANSIBLE_HOST_KEY_CHECKING
+rm -f ami.properties ||:
+if python -u $(which ansible-playbook) -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
+  -e tools_version=$AWSUTILS_VERSION -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
+  -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
+  -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
+  "${extra_args[@]}" -e root_ami=$AMI -e tstamp=$TSTAMP \
+  -e aws_region=$REGION -e ansible_ssh_user=$SSH_USER \
+  -e workdir="$(pwd -P)" -e fetch_secrets=$FETCH_SECRETS \
+  -e subnet_id=$SUBNET -e sg_id=$SECURITY_GROUP; then
+
+  echo "AMI_ID=$(cat $WORKSPACE/ami-id.txt)" > $WORKSPACE/ami.properties
+  echo "NAME=$(cat $WORKSPACE/name.txt)" >> $WORKSPACE/ami.properties
+  echo "SUCCESS"
+  cat $WORKSPACE/ami.properties
+  cleanup
+  exit 0
+else
+  echo "AMI baking failed"
+  cleanup
+  exit 1
+fi
 
 if [ -n "${SHARE_REGIONS}" ]; then
   echo "--------------------- Share to ${SHARE_REGIONS}"

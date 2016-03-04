@@ -72,19 +72,18 @@ job_exists () {
 create_or_update_job () {
   local new_job="$1"
   local new_job_file="$2"
-  local enable=1
+  local exists=0
+  local disabled=false
   if job_exists "$new_job" ; then
-    ! cli get-job "${new_job}" | egrep '^  <disabled>true</disabled>$' || enable=0
+    exists=1
+    local disabled=
+    ! cli get-job "${new_job}" | egrep -q '^  <disabled>true</disabled>$' || disabled=true
+  fi
+  perl -pe 's!^  <disabled>[^<]+</disabled>$!  <disabled>'$disabled'</disabled>!' "${new_job_file}"
+  if [ "$exists" = "1" ; then
     cli update-job "${new_job}" < "${new_job_file}"
   else
     cli create-job "${new_job}" < "${new_job_file}"
-  fi
-  if [ "${enable}" = "1" ]; then
-    echo "Enable job." >&2
-    cli enable-job "${new_job}"
-  else
-    echo "Disable job." >&2
-    cli disable-job "${new_job}"
   fi
 }
 

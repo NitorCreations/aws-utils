@@ -133,8 +133,8 @@ if python -u $(which ansible-playbook) \
   -e tstamp=$TSTAMP \
   -e aws_region=$REGION \
   -e ansible_ssh_user=$SSH_USER \
-  -e imagedir="${imagedir}" \
-  -e fetch_secrets=$FETCH_SECRETS \
+  -e imagedir="$(realpath "${imagedir}")" \
+  -e fetch_secrets="$(realpath "$FETCH_SECRETS")" \
   -e subnet_id=$SUBNET \
   -e sg_id=$SECURITY_GROUP \
   -e amibake_instanceprofile=$AMIBAKE_INSTANCEPROFILE \

@@ -44,9 +44,9 @@ cache () {
 [ "$FETCH_SECRETS" ] || FETCH_SECRETS=fetch-secrets.sh
 [ "$SUBNET" ] || SUBNET="$(cache show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
 [ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
-[ "$AMIBAKE_ROLE" ] || AMIBAKE_ROLE="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceRole)"
+[ "$AMIBAKE_INSTANCEPROFILE" ] || AMIBAKE_INSTANCEPROFILE="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceInstanceprofile)"
 
-for var in REGION SUBNET SECURITY_GROUP AMIBAKE_ROLE ; do
+for var in REGION SUBNET SECURITY_GROUP AMIBAKE_INSTANCEPROFILE ; do
   [ "${!var}" ] || die "Could not determine $var automatically. Please set ${var} manually in ${infrapropfile}"
 done
 
@@ -137,7 +137,7 @@ if python -u $(which ansible-playbook) \
   -e fetch_secrets=$FETCH_SECRETS \
   -e subnet_id=$SUBNET \
   -e sg_id=$SECURITY_GROUP \
-  -e amibake_role=$AMIBAKE_ROLE \
+  -e amibake_instanceprofile=$AMIBAKE_INSTANCEPROFILE \
    ; then
 
   echo "AMI_ID=$(cat ami-id.txt)" > ami.properties

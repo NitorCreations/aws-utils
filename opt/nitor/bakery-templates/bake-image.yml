@@ -48,7 +48,7 @@
         exact_count: 1
         instance_type: t2.medium
         image: "{{ root_ami }}"
-        instance_profile_name: "{{ amibake_role }}"
+        instance_profile_name: "{{ amibake_instanceprofile }}"
         vpc_subnet_id: "{{ subnet_id }}"
         assign_public_ip: yes
         group_id: "{{ sg_id }}"

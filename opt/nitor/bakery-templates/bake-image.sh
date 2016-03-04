@@ -16,28 +16,38 @@
 
 set -xe
 
+die () {
+  echo "$@" >&2
+  exit 1
+}
+
 image="$1" ; shift
+[ "${image}" ] || die "You must give the image name as argument"
+
+SSH_USER=$IMAGETYPE
+FETCH_SECRETS=fetch-secrets.sh
 
 source aws-utils/source_infra_properties.sh "$image" ""
 
-cd ${image}/image
+imagedir=${image}/image
+
+[ "$IMAGETYPE" ] || die "You must set IMAGETYPE in ${infrapropfile}"
 
 VAR_AMI="AMIID_${IMAGETYPE}"
 AMI="${!VAR_AMI}"
 
-SSH_USER=$IMAGETYPE
-FETCH_SECRETS=../../fetch-secrets.sh
+[ "$AMI" ] || die "You must set AMIID_$IMAGETYPE in ${infrapropfile}"
 
-DIR=$(cd $(dirname $0)/..; pwd -P)
 TSTAMP=$(date +%Y%m%d%H%M%S)
+
 cleanup() {
   eval $(ssh-agent -k)
 }
-
-if [ -z "$AWS_KEY_NAME" ]; then
-  AWS_KEY_NAME=nitor-intra
-fi
+trap cleanup EXIT
 eval $(ssh-agent)
+
+[ "$AWS_KEY_NAME" ] || die "You must set AWS_KEY_NAME in ${infrapropfile}"
+
 if [ -r "$HOME/.ssh/$AWS_KEY_NAME" ]; then
   ssh-add "$HOME/.ssh/$AWS_KEY_NAME"
 elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
@@ -45,65 +55,76 @@ elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
 elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.rsa" ]; then
   ssh-add "$HOME/.ssh/$AWS_KEY_NAME.rsa"
 else
-  echo "Failed to find ssh private key"
-  cleanup
-  exit 1
+  die "Failed to find ssh private key"
 fi
-if [ -z "$AWSUTILS_VERSION" ]; then
-  AWSUTILS_VERSION=0.58
-fi
+
+[ "$paramAwsUtilsVersion" ] || die "You must set paramAwsUtilsVersion in ${infrapropfile}"
 if [ -z "$BUILD_NUMBER" ]; then
   BUILD_NUMBER=$TSTAMP
 else
   BUILD_NUMBER=$(printf "%04d\n" $BUILD_NUMBER)
 fi
-if [ -z "$WORKSPACE" ]; then
-  WORKSPACE=$DIR
-fi
 if [ -z "$JOB_NAME" ]; then
-  JOB_NAME="bake-$(basename $(cd ..; pwd))"
+  JOB_NAME="${JENKINS_JOB_PREFIX}-${image}-bake"
 fi
-if ! [ -r ./pre_install.sh ]; then
-  echo -e "#!/bin/bash\n\nexit 0" > ./pre_install.sh
+if ! [ -r $imagedir/pre_install.sh ]; then
+  echo -e "#!/bin/bash\n\nexit 0" > $imagedir/pre_install.sh
 fi
-if ! [ -r ./post_install.sh ]; then
-  echo -e "#!/bin/bash\n\nexit 0" > ./post_install.sh
+if ! [ -r $imagedir/post_install.sh ]; then
+  echo -e "#!/bin/bash\n\nexit 0" > $imagedir/post_install.sh
 fi
-touch ./packages.txt
-PACKAGES="$($DIR/list-file-to-json.py packages ./packages.txt)"
+touch $imagedir/packages.txt
+PACKAGES="$(aws-utils/list-file-to-json.py packages $imagedir/packages.txt)"
 if [ "$IMAGETYPE" = "ubuntu" ]; then
-  touch ./repos.txt ./keys.txt
-  REPOS="$($DIR/list-file-to-json.py repos ./repos.txt)"
-  KEYS="$($DIR/list-file-to-json.py keys ./keys.txt)"
+  touch $imagedir/repos.txt $imagedir/keys.txt
+  REPOS="$(aws-utils/list-file-to-json.py repos $imagedir/repos.txt)"
+  KEYS="$(aws-utils/list-file-to-json.py keys $imagedir/keys.txt)"
   extra_args=( -e "$REPOS" -e "$KEYS" )
 else
   extra_args=( -e '{"repos": []}' -e '{"keys": []}' )
 fi
 
+[ "${REGION}" ] || die "Could not determine region automatically. Please set REGION manually in ${infrapropfile}"
+
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
-[ "${REGION}" ]
 NAME="${JOB}_$BUILD_NUMBER"
 AMI_TAG="$NAME"
-echo "$AMI_TAG" > $WORKSPACE/ami-tag.txt
-echo "$NAME" > $WORKSPACE/name.txt
+echo "$AMI_TAG" > ami-tag.txt
+echo "$NAME" > name.txt
 
 ANSIBLE_FORCE_COLOR=true
 ANSIBLE_HOST_KEY_CHECKING=false
 export ANSIBLE_FORCE_COLOR ANSIBLE_HOST_KEY_CHECKING
 rm -f ami.properties ||:
-if python -u $(which ansible-playbook) -vvvv --flush-cache -i $DIR/inventory $DIR/bake-ami.yml \
-  -e tools_version=$AWSUTILS_VERSION -e ami_tag=$AMI_TAG -e ami_id_file=$WORKSPACE/ami-id.txt \
-  -e job_name=$JOB -e aws_key_name=$AWS_KEY_NAME -e app_user=$APP_USER \
-  -e app_home=$APP_HOME -e build_number=$BUILD_NUMBER -e "$PACKAGES" \
-  "${extra_args[@]}" -e root_ami=$AMI -e tstamp=$TSTAMP \
-  -e aws_region=$REGION -e ansible_ssh_user=$SSH_USER \
-  -e workdir="$(pwd -P)" -e fetch_secrets=$FETCH_SECRETS \
-  -e subnet_id=$SUBNET -e sg_id=$SECURITY_GROUP; then
+if python -u $(which ansible-playbook) \
+  -vvvv \
+  --flush-cache \
+  -i aws-utils/bakery-templates/bake-image-inventory \
+  aws-utils/bakery-templates/bake-image.yml \
+  -e tools_version=$paramAwsUtilsVersion \
+  -e ami_tag=$AMI_TAG \
+  -e ami_id_file=ami-id.txt \
+  -e job_name=$JOB \
+  -e aws_key_name=$AWS_KEY_NAME \
+  -e app_user=$APP_USER \
+  -e app_home=$APP_HOME \
+  -e build_number=$BUILD_NUMBER \
+  -e "$PACKAGES" \
+  "${extra_args[@]}" \
+  -e root_ami=$AMI \
+  -e tstamp=$TSTAMP \
+  -e aws_region=$REGION \
+  -e ansible_ssh_user=$SSH_USER \
+  -e imagedir="${imagedir}" \
+  -e fetch_secrets=$FETCH_SECRETS \
+  -e subnet_id=$SUBNET \
+  -e sg_id=$SECURITY_GROUP \
+   ; then
 
-  echo "AMI_ID=$(cat $WORKSPACE/ami-id.txt)" > $WORKSPACE/ami.properties
-  echo "NAME=$(cat $WORKSPACE/name.txt)" >> $WORKSPACE/ami.properties
+  echo "AMI_ID=$(cat ami-id.txt)" > ami.properties
+  echo "NAME=$(cat name.txt)" >> ami.properties
   echo "SUCCESS"
-  cat $WORKSPACE/ami.properties
+  cat ami.properties
   cleanup
   exit 0
 else
@@ -120,6 +141,6 @@ if [ -n "${SHARE_REGIONS}" ]; then
       echo "Missing setting '${var_region_accounts}' in ${infrapropfile}"
       exit 1
     fi
-    $WORKSPACE/aws-utils/share-to-another-region.sh $(cat $WORKSPACE/ami-id.txt) ${region} $(cat $WORKSPACE/name.txt) ${!var_region_accounts}
+    aws-utils/share-to-another-region.sh $(cat ami-id.txt) ${region} $(cat name.txt) ${!var_region_accounts}
   done
 fi

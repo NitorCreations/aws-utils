@@ -61,7 +61,7 @@ generate_job_from_template () {
   local template_job="$1"
   shift
   local new_job_file="$(set -e ; create_temp_file job_XXXXXXXX.xml)"
-  cli_get_job "${template_job}" | tee "${new_job_file}-1" | apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" | tee "${new_job_file}-2" > "${new_job_file}"
+  cli_get_job "${template_job}" | apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" > "${new_job_file}"
   echo "${new_job_file}"
 }
 
@@ -80,11 +80,7 @@ create_or_update_job () {
   fi
   perl -i -pe 's!^  <disabled>[^<]+</disabled>$!  <disabled>'$disabled'</disabled>!' "${new_job_file}"
   if [ "$exists" = "1" ]; then
-    if ! cli_get_job "${new_job}" | diff - "${new_job_file}" ; then
-      cli update-job "${new_job}" < "${new_job_file}"
-    else
-      echo No changes
-    fi
+    cli update-job "${new_job}" < "${new_job_file}"
   else
     cli create-job "${new_job}" < "${new_job_file}"
   fi

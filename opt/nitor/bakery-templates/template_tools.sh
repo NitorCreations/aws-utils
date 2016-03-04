@@ -42,9 +42,10 @@ cli () {
 }
 
 cli_get_job () {
-  local file="${cli_cache}/${1}.xml"
-  [ -r "${file}" ] || cli get-job "$1" > "${file}"
-  echo "${file}"
+#  local file="${cli_cache}/${1}.xml"
+#  [ -r "${file}" ] || cli get-job "$1" > "${file}"
+#  cat "${file}"
+  cat ../../${1}/config.xml
 }
 
 generate_job_name () {
@@ -59,9 +60,8 @@ generate_job_name () {
 generate_job_from_template () {
   local template_job="$1"
   shift
-  local template_job_file="$(set -e ; cli_get_job "$template_job")"
   local new_job_file="$(set -e ; create_temp_file job_XXXXXXXX.xml)"
-  apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" < "${template_job_file}" > "${new_job_file}"
+  cli_get_job "${template_job}" | apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" > "${new_job_file}"
   echo "${new_job_file}"
 }
 
@@ -76,7 +76,7 @@ create_or_update_job () {
   local disabled=false
   if job_exists "$new_job" ; then
     exists=1
-    ! cli get-job "${new_job}" | egrep -q '^  <disabled>true</disabled>$' || disabled=true
+    ! cli_get_job "${new_job}" | egrep -q '^  <disabled>true</disabled>$' || disabled=true
   fi
   perl -i -pe 's!^  <disabled>[^<]+</disabled>$!  <disabled>'$disabled'</disabled>!' "${new_job_file}"
   if [ "$exists" = "1" ]; then

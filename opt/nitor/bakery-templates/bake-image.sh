@@ -26,14 +26,27 @@ image="$1" ; shift
 
 source aws-utils/source_infra_properties.sh "$image" ""
 
+[ ! -d .cache ] || rm -rf .cache
+mkdir .cache
+
+cache () {
+  cachefile=.cache/"${*// /_}"
+  if [ -e "$cachefile" ]; then
+    cat $cachefile
+  else
+    "$@" | tee $cachefile
+  fi
+}
+
 # Set defaults if not customized
 
 [ "$SSH_USER" ] || SSH_USER=$IMAGETYPE
 [ "$FETCH_SECRETS" ] || FETCH_SECRETS=fetch-secrets.sh
-[ "$SUBNET" ] || SUBNET="$(show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
-[ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
+[ "$SUBNET" ] || SUBNET="$(cache show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
+[ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
+[ "$AMIBAKE_ROLE" ] || AMIBAKE_ROLE="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceRole)"
 
-for var in REGION SUBNET SECURITY_GROUP ; do
+for var in REGION SUBNET SECURITY_GROUP AMIBAKE_ROLE ; do
   [ "${!var}" ] || die "Could not determine $var automatically. Please set ${var} manually in ${infrapropfile}"
 done
 
@@ -124,6 +137,7 @@ if python -u $(which ansible-playbook) \
   -e fetch_secrets=$FETCH_SECRETS \
   -e subnet_id=$SUBNET \
   -e sg_id=$SECURITY_GROUP \
+  -e amibake_role=$AMIBAKE_ROLE \
    ; then
 
   echo "AMI_ID=$(cat ami-id.txt)" > ami.properties

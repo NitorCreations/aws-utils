@@ -121,7 +121,7 @@ if python -u $(which ansible-playbook) \
   aws-utils/bakery-templates/bake-image.yml \
   -e tools_version=$paramAwsUtilsVersion \
   -e ami_tag=$AMI_TAG \
-  -e ami_id_file=ami-id.txt \
+  -e ami_id_file=$(pwd -P)/ami-id.txt \
   -e job_name=$JOB \
   -e aws_key_name=$AWS_KEY_NAME \
   -e app_user=$APP_USER \

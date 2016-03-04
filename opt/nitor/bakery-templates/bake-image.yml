@@ -111,7 +111,7 @@
     - yum: name={{ item }}
       with_items: "{{ packages }}"
       when: ansible_os_family == "RedHat"
-    - script: ./install_tools.sh {{ tools_version }}
+    - script: ../install_tools.sh {{ tools_version }}
     - script: "{{ imagedir }}/post_install.sh"
 
 - name: Create AMI from deployed instance

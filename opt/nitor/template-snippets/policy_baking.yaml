@@ -20,9 +20,19 @@ PolicyDocument:
   - Effect: Allow
     Resource: '*'
     Action:
+    - autoscaling:CreateAutoScalingGroup
+    - autoscaling:CreateLaunchConfiguration
+    - autoscaling:DeleteAutoScalingGroup
+    - autoscaling:DeleteLaunchConfiguration
+    - autoscaling:DescribeAutoScalingGroups
+    - autoscaling:DescribeLaunchConfigurations
+    - autoscaling:DescribeScalingActivities
+    - autoscaling:UpdateAutoScalingGroup
     - cloudformation:CreateStack
+    - cloudformation:DeleteStack
     - cloudformation:DescribeStacks
     - cloudformation:UpdateStack
+    - ec2:AuthorizeSecurityGroupEgress
     - ec2:AuthorizeSecurityGroupIngress
     - ec2:CreateImage
     - ec2:CreateSecurityGroup
@@ -37,8 +47,10 @@ PolicyDocument:
     - ec2:DescribeTags
     - ec2:DescribeVpcs
     - ec2:ModifyImageAttribute
+    - ec2:RevokeSecurityGroupEgress
     - ec2:RunInstances
     - ec2:TerminateInstances
+    - iam:AddRoleToInstanceProfile
     - iam:CreateInstanceProfile
     - iam:CreateRole
     - iam:CreateRolePolicy
@@ -46,13 +58,14 @@ PolicyDocument:
     - iam:DeleteRole
     - iam:DeleteRolePolicy
     - iam:GetRole
+    - iam:PassRole
     - iam:PutRolePolicy
+    - iam:RemoveRoleFromInstanceProfile
     - iam:UpdateAssumeRolePolicy
     - rds:DescribeDBInstances
+    - route53:ChangeResourceRecordSets
+    - route53:GetChange
+    - route53:GetChangeRequest
     - route53:ListHostedZones
     - sts:AssumeRole
     - sts:DecodeAuthorizationMessage
-  - Effect: Allow
-    Resource: {'Fn::GetAtt': [ resourceBakeRole, Arn ]}
-    Action:
-    - iam:PassRole

@@ -29,16 +29,23 @@ FETCH_SECRETS=fetch-secrets.sh
 
 source aws-utils/source_infra_properties.sh "$image" ""
 
-imagedir=${image}/image
+[ "$SUBNET" ] || SUBNET="$(show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
+[ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
 
-for var in IMAGETYPE AWS_KEY_NAME paramAwsUtilsVersion APP_USER APP_HOME SSH_USER FETCH_SECRETS SUBNET SECURITY_GROUP ; do
-  [ "${!var}" ] || die "You must set ${var} in ${infrapropfile}"
+for var in REGION SUBNET SECURITY_GROUP ; do
+  [ "${!var}" ] || die "Could not determine $var automatically. Please set ${var} manually in ${infrapropfile}"
 done
+
+for var in IMAGETYPE AWS_KEY_NAME paramAwsUtilsVersion APP_USER APP_HOME SSH_USER FETCH_SECRETS ; do
+  [ "${!var}" ] || die "Please set ${var} in ${infrapropfile}"
+done
+
+imagedir=${image}/image
 
 VAR_AMI="AMIID_${IMAGETYPE}"
 AMI="${!VAR_AMI}"
 
-[ "$AMI" ] || die "You must set AMIID_$IMAGETYPE in ${infrapropfile}"
+[ "$AMI" ] || die "Please set AMIID_$IMAGETYPE in ${infrapropfile}"
 
 TSTAMP=$(date +%Y%m%d%H%M%S)
 
@@ -82,8 +89,6 @@ if [ "$IMAGETYPE" = "ubuntu" ]; then
 else
   extra_args=( -e '{"repos": []}' -e '{"keys": []}' )
 fi
-
-[ "${REGION}" ] || die "Could not determine region automatically. Please set REGION manually in ${infrapropfile}"
 
 JOB=$(echo $JOB_NAME | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
 NAME="${JOB}_$BUILD_NUMBER"

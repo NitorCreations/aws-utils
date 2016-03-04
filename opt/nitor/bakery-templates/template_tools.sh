@@ -60,8 +60,8 @@ generate_job_name () {
 generate_job_from_template () {
   local template_job="$1"
   shift
-  local new_job_file="$(set -e ; create_temp_file job_XXXXXXXX.xml)"
-  cli_get_job "${template_job}" | apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" > "${new_job_file}"
+  local new_job_file="${cli_cache}/${template_job}.xml"
+  cli_get_job "${template_job}" | tee ${cli_cache}/${template_job}-1.xml | apply_parameters "$@" template="${template_job}" jobupdater="${JOB_NAME}" jobupdaterbuild="${BUILD_DISPLAY_NAME}" | tee ${cli_cache}/${template_job}-2.xml > "${new_job_file}"
   echo "${new_job_file}"
 }
 

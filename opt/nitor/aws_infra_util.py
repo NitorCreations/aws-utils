@@ -254,23 +254,16 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
             region = stack_var['region']
             stack_name = stack_var['stackName']
             stack_param = stack_var['paramName']
-            describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', "--region", region, '--stack-name', stack_name ]
+            describe_stack_command = [ 'show-stack-params-and-outputs.sh', region, stack_name ]
             p = subprocess.Popen(describe_stack_command,
                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             output = p.communicate()
             if p.returncode:
                 sys.exit("Describe stack failed: " + output[1])
-            stack_info = json_load(output[0])
-            for input_var in  stack_info['Stacks'][0]['Parameters']:
-                if input_var['ParameterKey'] == stack_param:
-                    data = input_var['ParameterValue']
-                    break
-            for output_var in stack_info['Stacks'][0]['Outputs']:
-                if output_var['OutputKey'] == stack_param:
-                    data = output_var['OutputValue']
-                    break
-            if not data:
+            stack_params = json_load(output[0])
+            if (not stack_param in stack_params):
                 sys.exit("Did not find value for: " + stack_param + " in stack " + stack_name)
+            data = stack_params[stack_param]
         else:
             for k,v in data.items():
                 data[k] = import_scripts_pass2(v, templateFile, path + k + "_", templateParams, resolveRefs)

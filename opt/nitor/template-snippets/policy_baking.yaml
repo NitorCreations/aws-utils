@@ -41,11 +41,15 @@ PolicyDocument:
     - ec2:TerminateInstances
     - iam:CreateInstanceProfile
     - iam:CreateRole
+    - iam:CreateRolePolicy
+    - iam:DeleteInstanceProfile
+    - iam:DeleteRole
     - iam:DeleteRolePolicy
     - iam:GetRole
     - iam:PutRolePolicy
     - iam:UpdateAssumeRolePolicy
     - rds:DescribeDBInstances
+    - route53:ListHostedZones
     - sts:AssumeRole
     - sts:DecodeAuthorizationMessage
   - Effect: Allow

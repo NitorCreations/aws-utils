@@ -108,7 +108,7 @@ create_view () {
 # usage get_var <name> [<imagename> [<stackname>]]
 get_var () {
   (
-    source "${BASH_SOURCE[0]}/../source_infra_properties.sh" "$2" "$3"
+    source "${BASH_SOURCE[0]%/*}/../source_infra_properties.sh" "$2" "$3"
     echo -n "${!1}"
   )
 }

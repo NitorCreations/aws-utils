@@ -45,7 +45,7 @@ cli_get_job () {
 #  local file="${cli_cache}/${1}.xml"
 #  [ -r "${file}" ] || cli get-job "$1" > "${file}"
 #  cat "${file}"
-  cat "../../${1}/config.xml"
+  xmllint "../../${1}/config.xml"
 }
 
 generate_job_name () {

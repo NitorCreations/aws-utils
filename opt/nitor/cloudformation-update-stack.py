@@ -116,7 +116,7 @@ def deploy(stack_name, yaml_template, region):
          aws_infra_util.json_save(params_doc)
          ]
 
-    currentTimeInCloudWatchFormat = datetime.datetime.now().strftime("%FT%H%%253A%M%%253A%SZ")
+    currentTimeInCloudWatchFormat = datetime.datetime.utcnow().strftime("%FT%H%%253A%M%%253A%SZ")
 
     print(stack_oper + ": " + str(stack_command))
     p = subprocess.Popen(stack_command,

@@ -20,6 +20,9 @@ PolicyDocument:
   - Effect: Allow
     Resource: '*'
     Action:
+    - 'cloudformation:DescribeStacks'
+    - 'cloudformation:UpdateStack'
+    - 'ec2:AuthorizeSecurityGroupIngress'
     - 'ec2:CreateImage'
     - 'ec2:CreateTags'
     - 'ec2:DeleteSnapshot'
@@ -29,20 +32,18 @@ PolicyDocument:
     - 'ec2:DescribeSecurityGroups'
     - 'ec2:DescribeSubnets'
     - 'ec2:DescribeTags'
+    - 'ec2:DescribeVpcs'
     - 'ec2:ModifyImageAttribute'
     - 'ec2:RunInstances'
     - 'ec2:TerminateInstances'
-    - 'cloudformation:DescribeStacks'
-    - 'cloudformation:UpdateStack'
+    - 'iam:CreateInstanceProfile'
+    - 'iam:GetRole'
+    - 'iam:DeleteRolePolicy'
+    - 'iam:PutRolePolicy'
+    - 'iam:UpdateAssumeRolePolicy'
     - 'rds:DescribeDBInstances'
     - 'sts:AssumeRole'
-    - 'ec2:DescribeVpcs'
-    - 'ec2:AuthorizeSecurityGroupIngress'
     - 'sts:DecodeAuthorizationMessage'
-    - 'iam:UpdateAssumeRolePolicy'
-    - 'iam:PutRolePolicy'
-    - 'iam:DeleteRolePolicy'
-    - 'iam:GetRole'
   - Effect: Allow
     Resource: {'Fn::GetAtt': [ resourceBakeRole, Arn ]}
     Action:

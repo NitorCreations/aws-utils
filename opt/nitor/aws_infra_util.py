@@ -238,6 +238,7 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
         if ('Ref' in data):
             varName = data['Ref']
             filename = data['__source']
+            del data['__source']
             if (not varName in templateParams):
                 print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
                 gotImportErrors = True
@@ -247,8 +248,6 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
                     if (data == PARAM_NOT_AVAILABLE):
                         print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " is resolved later by AWS; cannot resolve its value now")
                         gotImportErrors = True
-                else:
-                    del data['__source']
         elif ('StackRef' in data):
             stack_var = import_scripts_pass2(data['StackRef'], templateFile, path + "StackRef_", templateParams, True)
             data.clear()

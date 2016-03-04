@@ -122,13 +122,10 @@ if python -u $(which ansible-playbook) \
 
   echo "AMI_ID=$(cat ami-id.txt)" > ami.properties
   echo "NAME=$(cat name.txt)" >> ami.properties
-  echo "SUCCESS"
+  echo "Baking complete."
   cat ami.properties
-  cleanup
-  exit 0
 else
   echo "AMI baking failed"
-  cleanup
   exit 1
 fi
 
@@ -143,3 +140,4 @@ if [ -n "${SHARE_REGIONS}" ]; then
     aws-utils/share-to-another-region.sh $(cat ami-id.txt) ${region} $(cat name.txt) ${!var_region_accounts}
   done
 fi
+echo "SUCCESS"

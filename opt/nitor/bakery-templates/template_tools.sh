@@ -80,7 +80,11 @@ create_or_update_job () {
   fi
   perl -i -pe 's!^  <disabled>[^<]+</disabled>$!  <disabled>'$disabled'</disabled>!' "${new_job_file}"
   if [ "$exists" = "1" ]; then
-    cli update-job "${new_job}" < "${new_job_file}"
+    if ! cli_get_job "${new_job}" | diff - "${new_job_file}" ; then
+      cli update-job "${new_job}" < "${new_job_file}"
+    else
+      echo No changes
+    fi
   else
     cli create-job "${new_job}" < "${new_job_file}"
   fi

@@ -31,7 +31,9 @@ source aws-utils/source_infra_properties.sh "$image" ""
 
 imagedir=${image}/image
 
-[ "$IMAGETYPE" ] || die "You must set IMAGETYPE in ${infrapropfile}"
+for var in IMAGETYPE AWS_KEY_NAME paramAwsUtilsVersion APP_USER APP_HOME SSH_USER FETCH_SECRETS SUBNET SECURITY_GROUP ; do
+  [ "${!var}" ] || die "You must set ${var} in ${infrapropfile}"
+done
 
 VAR_AMI="AMIID_${IMAGETYPE}"
 AMI="${!VAR_AMI}"
@@ -46,8 +48,6 @@ cleanup() {
 trap cleanup EXIT
 eval $(ssh-agent)
 
-[ "$AWS_KEY_NAME" ] || die "You must set AWS_KEY_NAME in ${infrapropfile}"
-
 if [ -r "$HOME/.ssh/$AWS_KEY_NAME" ]; then
   ssh-add "$HOME/.ssh/$AWS_KEY_NAME"
 elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
@@ -58,7 +58,6 @@ else
   die "Failed to find ssh private key"
 fi
 
-[ "$paramAwsUtilsVersion" ] || die "You must set paramAwsUtilsVersion in ${infrapropfile}"
 if [ -z "$BUILD_NUMBER" ]; then
   BUILD_NUMBER=$TSTAMP
 else
@@ -92,9 +91,9 @@ AMI_TAG="$NAME"
 echo "$AMI_TAG" > ami-tag.txt
 echo "$NAME" > name.txt
 
-ANSIBLE_FORCE_COLOR=true
-ANSIBLE_HOST_KEY_CHECKING=false
-export ANSIBLE_FORCE_COLOR ANSIBLE_HOST_KEY_CHECKING
+export ANSIBLE_FORCE_COLOR=true
+export ANSIBLE_HOST_KEY_CHECKING=false
+
 rm -f ami.properties ||:
 if python -u $(which ansible-playbook) \
   -vvvv \

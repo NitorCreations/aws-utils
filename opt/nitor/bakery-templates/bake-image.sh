@@ -24,11 +24,12 @@ die () {
 image="$1" ; shift
 [ "${image}" ] || die "You must give the image name as argument"
 
-SSH_USER=$IMAGETYPE
-FETCH_SECRETS=fetch-secrets.sh
-
 source aws-utils/source_infra_properties.sh "$image" ""
 
+# Set defaults if not customized
+
+[ "$SSH_USER" ] || SSH_USER=$IMAGETYPE
+[ "$FETCH_SECRETS" ] || FETCH_SECRETS=fetch-secrets.sh
 [ "$SUBNET" ] || SUBNET="$(show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
 [ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
 

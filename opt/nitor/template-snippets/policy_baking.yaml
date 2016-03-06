@@ -25,6 +25,7 @@ PolicyDocument:
     - autoscaling:DeleteAutoScalingGroup
     - autoscaling:DeleteLaunchConfiguration
     - autoscaling:DescribeAutoScalingGroups
+    - autoscaling:DescribeAutoScalingInstances
     - autoscaling:DescribeLaunchConfigurations
     - autoscaling:DescribeScalingActivities
     - autoscaling:DescribeScheduledActions

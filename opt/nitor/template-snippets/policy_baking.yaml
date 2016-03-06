@@ -27,6 +27,9 @@ PolicyDocument:
     - autoscaling:DescribeAutoScalingGroups
     - autoscaling:DescribeLaunchConfigurations
     - autoscaling:DescribeScalingActivities
+    - autoscaling:DescribeScheduledActions
+    - autoscaling:SetDesiredCapacity
+    - autoscaling:TerminateInstanceInAutoScalingGroup
     - autoscaling:UpdateAutoScalingGroup
     - cloudformation:CreateStack
     - cloudformation:DeleteStack

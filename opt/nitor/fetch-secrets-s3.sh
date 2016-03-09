@@ -27,6 +27,9 @@ case "$COMMAND" in
   show)
     SHOW=1
     ;;
+  login|logout)
+    exit 0
+    ;;
   *)
     #old api
     MODE=444

@@ -14,17 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+cleanup() {
+  /opt/nitor/fetch-secrets.sh logout
+}
+trap cleanup EXIT
+
 if [ -z "$1" ]; then
   echo "usage: $0 <domain-name>"
   exit 1
 fi
-DOMAIN="$1"
 RENEW_DAYS="30"
 if [ -z "$CERT_DIR" ]; then
   CERT_DIR=/etc/certs
 fi
-
-CERT=$CERT_DIR/$DOMAIN.crt
 
 renew_cert() {
   local DOMAIN="$1"
@@ -33,12 +35,16 @@ renew_cert() {
   letsencrypt.sh --cron --hook /opt/nitor/hook.sh --challenge dns-01 --domain "$DOMAIN"
 }
 
-if /opt/nitor/fetch-secrets.sh get 444 $CERT; then
-  VALID="$(openssl x509 -enddate -noout -in "$CERT" | cut -d= -f2- )"
-  echo "Valid: $VALID"
-  if ! openssl x509 -checkend $((RENEW_DAYS * 86400)) -noout -in "$CERT"; then
+for DOMAIN in "$@"; do
+  CERT=$CERT_DIR/$DOMAIN.crt
+  chmod 600 $CERT
+  if /opt/nitor/fetch-secrets.sh get 444 $CERT; then
+    VALID="$(openssl x509 -enddate -noout -in "$CERT" | cut -d= -f2- )"
+    echo "Valid: $VALID"
+    if ! openssl x509 -checkend $((RENEW_DAYS * 86400)) -noout -in "$CERT"; then
+      renew_cert $DOMAIN
+    fi
+  else
     renew_cert $DOMAIN
   fi
-else
-  renew_cert $DOMAIN
-fi
+done

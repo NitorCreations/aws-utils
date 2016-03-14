@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2016 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,12 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-Type: AWS::Lambda::Function
-Properties:
-  Code:
-    ZipFile: {'Fn::ImportFile': delete-old-snapshots.min.js}
-  Description: 'Deletes snapshots older than a month that have a specific tag key/value'
-  Handler: 'index.handler'
-  MemorySize: 128
-  Runtime: nodejs
-  Role: {'Fn::GetAtt': [ ((role)), Arn ]}
+COMPRESSOR_JAR="yuicompressor-2.4.8.jar"
+
+if ! [ -r $COMPRESSOR_JAR ]; then
+  wget -O $COMPRESSOR_JAR https://github.com/yui/yuicompressor/releases/download/v2.4.8/$COMPRESSOR_JAR
+fi
+
+for next in "$@"; do
+  OUT="${next%*.js}.min.js"
+  java -jar $COMPRESSOR_JAR --type js --nomunge -o $OUT $next
+  sed -i -e 's/var\s*CF_\([^;]*\);/\nvar CF_\1;\n/g' -e 's/\n\n/\n/g' $OUT
+done

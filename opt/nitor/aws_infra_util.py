@@ -22,6 +22,7 @@ import collections
 import re
 import os
 
+stacks = dict()
 ############################################################################
 # _THE_ yaml & json deserialize/serialize functions
 def yaml_load(stream, Loader=yaml.SafeLoader, object_pairs_hook=collections.OrderedDict):
@@ -254,13 +255,18 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
             region = stack_var['region']
             stack_name = stack_var['stackName']
             stack_param = stack_var['paramName']
-            describe_stack_command = [ 'show-stack-params-and-outputs.sh', region, stack_name ]
-            p = subprocess.Popen(describe_stack_command,
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            output = p.communicate()
-            if p.returncode:
-                sys.exit("Describe stack failed: " + output[1])
-            stack_params = json_load(output[0])
+            stack_key = region + "." + stack_name
+            if (stack_key in stacks):
+                stack_params = stacks[stack_key]
+            else:
+                describe_stack_command = [ 'show-stack-params-and-outputs.sh', region, stack_name ]
+                p = subprocess.Popen(describe_stack_command,
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                output = p.communicate()
+                if p.returncode:
+                    sys.exit("Describe stack failed: " + output[1])
+                stack_params = json_load(output[0])
+                stacks[stack_key] = stack_params
             if (not stack_param in stack_params):
                 sys.exit("Did not find value for: " + stack_param + " in stack " + stack_name)
             data = stack_params[stack_param]

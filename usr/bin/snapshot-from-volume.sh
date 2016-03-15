@@ -23,7 +23,7 @@ fail() {
   echo $1
   exit 1
 }
-
+set_region
 SNAPSHOT_LOOKUP_TAG_KEY=$1
 SNAPSHOT_LOOKUP_TAG_VALUE=$2
 MOUNT_PATH=$3

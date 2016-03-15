@@ -33,13 +33,6 @@ resourceDeleteSnapshotsRole:
         - Effect: Allow
           Action: ['logs:CreateLogGroup', 'logs:CreateLogStream', 'logs:PutLogEvents']
           Resource: arn:aws:logs:*:*:*
-resoureInvokeLambdaRole:
-  Type: AWS::IAM::Role
-  Properties:
-    AssumeRolePolicyDocument: { 'Fn::ImportYaml': ../../aws-utils/template-snippets/policydoc_assumerole.yaml }
-    Path: /
-    Policies:
-    - { 'Fn::ImportYaml': ../../aws-utils/template-snippets/policy_invoke_lambda.yaml, function: resourceDeleteSnapshotsLambda }
 resourceDeleteSnapshotsLambda:
   Type: AWS::Lambda::Function
   Properties:
@@ -50,3 +43,15 @@ resourceDeleteSnapshotsLambda:
     MemorySize: 128
     Runtime: nodejs
     Role: {'Fn::GetAtt': [ resourceDeleteSnapshotsRole, Arn ]}
+resoureInvokeLambdaPolicy:
+  Type: AWS::IAM::Policy
+  Properties:
+    PolicyName: allowInvokeLambda
+    Roles: [ { StackRef: { region: ((region)), stackName: ((stack)), paramName: ((parameter)) }}]
+    PolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+      - Effect: Allow
+        Resource: {'Fn::GetAtt': [ resourceDeleteSnapshotsLambda, Arn]}
+        Action:
+        - 'lambda:InvokeFunction'

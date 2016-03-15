@@ -34,11 +34,20 @@ jenkins_mount_home () {
 }
 
 jenkins_mount_ebs_home () {
+  check_parameters CF_paramEBSTag CF_resourceDeleteSnapshotsLambda
   local SIZE=$1
   if [ -z "$SIZE" ]; then
     SIZE=32
   fi
-  volume-from-snapshot.sh  ${CF_paramDnsName%%.*} ${CF_paramDnsName%%.*} /var/lib/jenkins/jenkins-home $SIZE
+  local MOUNT_PATH=/var/lib/jenkins/jenkins-home
+  volume-from-snapshot.sh ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH  $SIZE
+  cat > /etc/cron.d/${CF_paramEBSTag}-snapshot << MARKER
+30 * * * * root /usr/bin/snapshot-from-volume.sh ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH >> /var/log/snapshots.log 2>&1
+MARKER
+  cat > /etc/cron.d/${CF_paramEBSTag}-clean << MARKER
+45 4 * * * root /usr/bin/clean-snapshots.sh ${CF_resourceDeleteSnapshotsLambda} >> /var/log/snapshots.log 2>&1
+MARKER
+
 }
 
 jenkins_setup_default_gitignore () {
@@ -62,6 +71,7 @@ outOfOrderBuilds
 secret.key
 secrets
 workspace
+jenkins.war*
 EOF
   chown -R jenkins:jenkins /var/lib/jenkins-default/
 }
@@ -116,14 +126,15 @@ jenkins_merge_default_install_with_repo () {
 
 jenkins_setup_git_sync_script () {
   if [ ! -e /var/lib/jenkins/jenkins-home/sync_git.sh ]; then
-    cat > /var/lib/jenkins/jenkins-home/sync_git.sh << 'EOF'
+    cat > /var/lib/jenkins/jenkins-home/sync_git.sh << EOF
 #!/bin/bash -xe
 
-DIR=$(cd $(dirname $0); pwd -P)
-cd $DIR
+/usr/bin/snapshot-from-volume.sh ${CF_paramEBSTag} ${CF_paramEBSTag} /var/lib/jenkins/jenkins-home
+DIR=\$(cd \$(dirname \$0); pwd -P)
+cd \$DIR
 date
 git add -A
-git commit -m "Syncing latest changes$COMMITMSGSUFFIX" ||:
+git commit -m "Syncing latest changes\$COMMITMSGSUFFIX" ||:
 EOF
     [ ! "${CF_paramJenkinsGit}" ] || echo 'git push origin master' >> /var/lib/jenkins/jenkins-home/sync_git.sh
   fi
@@ -132,12 +143,22 @@ EOF
 
 jenkins_setup_git_sync_on_shutdown () {
   # Amend service script to call sync_git right after stopping the service - original script saved as jenkins.orig
-  if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
-    perl -i.orig -e 'while(<>){print;if(m!^(\s+)do_stop!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
-  elif [ "$SYSTEM_TYPE" = "centos" -o "$SYSTEM_TYPE" = "fedora" ]; then
-    perl -i.orig -e 'while(<>){print;if(m!^(\s+)killproc!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+  if [ -n "${CF_paramJenkinsGit}" ]; then
+    if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
+      perl -i.orig -e 'while(<>){print;if(m!^(\s+)do_stop!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+    elif [ "$SYSTEM_TYPE" = "centos" -o "$SYSTEM_TYPE" = "fedora" ]; then
+      perl -i.orig -e 'while(<>){print;if(m!^(\s+)killproc!){print $1.'\''retval="$?"'\''."\n".$1."sudo -iu jenkins env COMMITMSGSUFFIX=\" (jenkins shutdown)\" /var/lib/jenkins/jenkins-home/sync_git.sh\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+    else
+      echo "Unkown system type $SYSTEM_TYPE"
+    fi
   else
-    echo "Unkown system type $SYSTEM_TYPE"
+    if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
+      perl -i.orig -e 'while(<>){print;if(m!^(\s+)do_stop!){print $1.'\''retval="$?"'\''."\n".$1."/usr/bin/snapshot-from-volume.sh '${CF_paramEBSTag}' '${CF_paramEBSTag}' /var/lib/jenkins/jenkins-home\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+    elif [ "$SYSTEM_TYPE" = "centos" -o "$SYSTEM_TYPE" = "fedora" ]; then
+      perl -i.orig -e 'while(<>){print;if(m!^(\s+)killproc!){print $1.'\''retval="$?"'\''."\n".$1."/usr/bin/snapshot-from-volume.sh '${CF_paramEBSTag}' '${CF_paramEBSTag}' /var/lib/jenkins/jenkins-home\n";last;}}$_=<>;s/\$\?/\$retval/;print;while(<>){print}' /etc/init.d/jenkins
+    else
+      echo "Unkown system type $SYSTEM_TYPE"
+    fi
   fi
 }
 

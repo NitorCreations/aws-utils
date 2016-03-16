@@ -38,6 +38,7 @@ PolicyDocument:
     - cloudformation:UpdateStack
     - ec2:AuthorizeSecurityGroupEgress
     - ec2:AuthorizeSecurityGroupIngress
+    - ec2:CopyImage
     - ec2:CreateImage
     - ec2:CreateSecurityGroup
     - ec2:CreateTags

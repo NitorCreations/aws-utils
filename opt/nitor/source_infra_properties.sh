@@ -38,4 +38,4 @@ source "${infrapropfile}"
 
 # Same logic as above for account id
 [ "$ACCOUNT_ID" ] || ACCOUNT_ID=$(curl -s  http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | awk -F\" '{print $4}')
-[ "$ACCOUNT_ID" ] || ACCOUNT_ID=$(aws ec2 describe-security-groups --group-names 'Default' --query 'SecurityGroups[0].OwnerId' --output text)
+[ "$ACCOUNT_ID" ] || ACCOUNT_ID=$(aws iam get-user | grep Arn | awk -NF: '{ print $6 }')

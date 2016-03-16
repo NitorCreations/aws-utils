@@ -353,7 +353,7 @@ def extract_scripts(data, prefix, path=""):
         if (k == "Fn::Join"):
             if not(v[0] == ""):
                 continue
-            if (v[1][0].find("#!") != 0):
+            if (isinstance(v[1][0], basestring) and (v[1][0].find("#!") != 0)):
                 continue
             file = extract_script(prefix, path, v[1])
             del data[k]

@@ -24,6 +24,7 @@ CF_paramJenkinsGit=
 CF_paramDnsName=
 CF_paramEip=
 CF_paramEBSTag=
+CF_paramEBSSize=32
 CF_resourceDeleteSnapshotsLambda=
 
 export HOME=/root
@@ -57,7 +58,7 @@ apache_replace_domain_vars
 apache_install_certs
 
 jenkins_setup_dotssh
-jenkins_mount_ebs_home 32
+jenkins_mount_ebs_home ${CF_paramEBSSize}
 jenkins_setup_default_gitignore
 jenkins_fetch_repo
 jenkins_merge_default_install_with_repo

@@ -105,6 +105,9 @@ def get_params(data, template):
 
     # first load defaults for all parameters in "Parameters"
     addParams(params, data, 'Parameters', True)
+    params['REGION'] = PARAM_NOT_AVAILABLE
+    params['ACCOUNT_ID'] = PARAM_NOT_AVAILABLE
+    params['STACK_NAME'] = PARAM_NOT_AVAILABLE
 
     # then override them with values from infra
     template_dir = os.path.dirname(os.path.abspath(template))

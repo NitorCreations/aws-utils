@@ -103,7 +103,7 @@ def deploy(stack_name, yaml_template, region):
             params_doc.append({ 'ParameterKey': key, 'ParameterValue': val })
         else:
             val = template_parameters[key]['Default']
-            print("Parameter " + key + ": using default value " + val)
+            print("Parameter " + key + ": using default value " + str(val))
 
     stack_command = \
         ['aws', 'cloudformation', stack_oper, "--region", region, '--stack-name',

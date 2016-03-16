@@ -129,13 +129,15 @@ def get_params(data, template):
                 v = v.strip("'").strip('"')
                 params[k] = v
 
+    # source_infra_properties.sh always resolves a region, account id and stack name
+    params["AWS::Region"] = params['REGION']
+    params["AWS::AccountId"] = params['ACCOUNT_ID']
+    params["AWS::StackName"] = params['STACK_NAME']
+
     # finally load AWS-provided and "Resources"
-    params["AWS::AccountId"] = PARAM_NOT_AVAILABLE
     params["AWS::NotificationARNs"] = PARAM_NOT_AVAILABLE
     params["AWS::NoValue"] = PARAM_NOT_AVAILABLE
-    params["AWS::Region"] = PARAM_NOT_AVAILABLE
     params["AWS::StackId"] = PARAM_NOT_AVAILABLE
-    params["AWS::StackName"] = PARAM_NOT_AVAILABLE
     addParams(params, data, 'Resources', False)
 
     return params

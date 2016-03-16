@@ -31,4 +31,11 @@ source "${infrapropfile}"
 [ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
 [ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
 
-[ "$REGION" ] || REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
+#If region not set in infra files, get the region of the instance
+[ "$REGION" ] || REGION=$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | grep region | awk -F\" '{print $4}')
+#If not running on an AWS instance, get the region configured for aws tools
+[ "$REGION" ] || REGION=$(aws configure list | grep region | awk '{ print $2 }')
+
+# Same logic as above for account id
+[ "$ACCOUNT_ID" ] || ACCOUNT_ID=$(curl -s  http://169.254.169.254/latest/dynamic/instance-identity/document | grep accountId | awk -F\" '{print $4}')
+[ "$ACCOUNT_ID" ] || ACCOUNT_ID=$(aws ec2 describe-security-groups --group-names 'Default' --query 'SecurityGroups[0].OwnerId' --output text)

@@ -81,15 +81,16 @@ EOF
 jenkins_fetch_repo () {
   chown -R jenkins:jenkins /var/lib/jenkins
   chown -R jenkins:jenkins /var/lib/jenkins/jenkins-home
-  sudo -iu jenkins git init /var/lib/jenkins/jenkins-home
   if [ "${CF_paramJenkinsGit}" ]; then
-    echo "Using remote jenkins config git repo ${CF_paramJenkinsGit}"
-    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git remote add -f -t master \
-	 origin ${CF_paramJenkinsGit}
-    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
-	 --work-tree=/var/lib/jenkins/jenkins-home checkout master
+    sudo -iu jenkins git init /var/lib/jenkins/jenkins-home
+    if ! sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git remote -v | grep ${CF_paramJenkinsGit} > /dev/null 2>&1; then
+      echo "Adding remote jenkins config git repo ${CF_paramJenkinsGit}"
+      sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git remote add -f -t master origin ${CF_paramJenkinsGit}
+    fi
+    echo "Checking out jenkins config git repo ${CF_paramJenkinsGit}"
+    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git --work-tree=/var/lib/jenkins/jenkins-home checkout master
   else
-    echo "Created local-only jenkins config git repo"
+    echo "Created EBS backed jenkins config"
   fi
 }
 
@@ -130,13 +131,17 @@ jenkins_setup_git_sync_script () {
 #!/bin/bash -xe
 
 /usr/bin/snapshot-from-volume.sh ${CF_paramEBSTag} ${CF_paramEBSTag} /var/lib/jenkins/jenkins-home
+EOF
+    if [ "${CF_paramJenkinsGit}" ]; then
+      cat >> /var/lib/jenkins/jenkins-home/sync_git.sh << EOF
 DIR=\$(cd \$(dirname \$0); pwd -P)
 cd \$DIR
 date
 git add -A
 git commit -m "Syncing latest changes\$COMMITMSGSUFFIX" ||:
+git push origin master
 EOF
-    [ ! "${CF_paramJenkinsGit}" ] || echo 'git push origin master' >> /var/lib/jenkins/jenkins-home/sync_git.sh
+    fi
   fi
   chmod 755 /var/lib/jenkins/jenkins-home/sync_git.sh
 }

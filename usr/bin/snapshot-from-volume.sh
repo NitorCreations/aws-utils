@@ -29,8 +29,19 @@ SNAPSHOT_LOOKUP_TAG_VALUE=$2
 MOUNT_PATH=$3
 
 DEVICE=$(lsblk | egrep " $MOUNT_PATH\$" | awk '{ print "/dev/"$1 }')
-VOLUME_ID=$(aws ec2 describe-volumes --output json --query "Volumes[*].Attachments[*]" | jq -r ".[]|.[]|select(.Device==\"$DEVICE\").VolumeId")
+INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+VOLUME_ID=$(aws ec2 describe-volumes --output json --query "Volumes[*].Attachments[*]" | jq -r ".[]|.[]|select(.Device==\"$DEVICE\" and .InstanceId==\"$INSTANCE_ID\").VolumeId")
 
-if ! create_snapshot $VOLUME_ID $SNAPSHOT_LOOKUP_TAG_KEY $SNAPSHOT_LOOKUP_TAG_VALUE; then
+if ! SNAPSHOT_ID=$(create_snapshot $VOLUME_ID $SNAPSHOT_LOOKUP_TAG_KEY $SNAPSHOT_LOOKUP_TAG_VALUE); then
   fail $ERROR
 fi
+COUNTER=0
+while [  $COUNTER -lt 180 ] && [ "$SNAPSHOT_STATUS" != "completed" ]; do
+  sleep 1
+  SNAPSHOT_STATUS=$(aws ec2 describe-snapshots --snapshot-ids $SNAPSHOT_ID | jq -r ".Snapshots[0].State")
+  COUNTER=$(($COUNTER+1))
+done
+if [ "$SNAPSHOT_STATUS" != "completed" ]; then
+  fail "Failed to complete snapshot"
+fi
+echo $SNAPSHOT_ID

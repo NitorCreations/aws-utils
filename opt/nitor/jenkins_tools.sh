@@ -42,7 +42,7 @@ jenkins_mount_ebs_home () {
   local MOUNT_PATH=/var/lib/jenkins/jenkins-home
   volume-from-snapshot.sh ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH  $SIZE
   cat > /etc/cron.d/${CF_paramEBSTag}-snapshot << MARKER
-30 * * * * root /usr/bin/snapshot-from-volume.sh ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH >> /var/log/snapshots.log 2>&1
+30 * * * * root /usr/bin/snapshot-from-volume.sh -w ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH >> /var/log/snapshots.log 2>&1
 MARKER
   cat > /etc/cron.d/${CF_paramEBSTag}-clean << MARKER
 45 4 * * * root /usr/bin/clean-snapshots.sh ${CF_resourceDeleteSnapshotsLambda} >> /var/log/snapshots.log 2>&1
@@ -130,7 +130,7 @@ jenkins_setup_git_sync_script () {
     cat > /var/lib/jenkins/jenkins-home/sync_git.sh << EOF
 #!/bin/bash -xe
 
-/usr/bin/snapshot-from-volume.sh ${CF_paramEBSTag} ${CF_paramEBSTag} /var/lib/jenkins/jenkins-home
+/usr/bin/snapshot-from-volume.sh -w ${CF_paramEBSTag} ${CF_paramEBSTag} /var/lib/jenkins/jenkins-home
 EOF
     if [ "${CF_paramJenkinsGit}" ]; then
       cat >> /var/lib/jenkins/jenkins-home/sync_git.sh << EOF

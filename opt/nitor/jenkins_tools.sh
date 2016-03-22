@@ -216,10 +216,12 @@ EOF
 
 jenkins_git_commit () {
   chown -R jenkins:jenkins /var/lib/jenkins
-  sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
-       --work-tree=/var/lib/jenkins/jenkins-home add .
-  sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
-       --work-tree=/var/lib/jenkins/jenkins-home commit -m 'Post-installation commit' ||:
+  if [ -n "${CF_paramJenkinsGit}" ]; then
+    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
+         --work-tree=/var/lib/jenkins/jenkins-home add .
+    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
+         --work-tree=/var/lib/jenkins/jenkins-home commit -m 'Post-installation commit' ||:
+  fi
 }
 
 jenkins_discard_default_install () {

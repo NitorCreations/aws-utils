@@ -19,6 +19,8 @@ fail() {
   exit 1
 }
 
+set -x
+
 source /opt/nitor/ebs-functions.sh
 SNAPSHOT_LOOKUP_TAG_KEY=$1
 SNAPSHOT_LOOKUP_TAG_VALUE=$2

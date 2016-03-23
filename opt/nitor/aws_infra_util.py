@@ -86,7 +86,7 @@ def import_script(filename, template):
                 result = EMBED_DECL_RE.match(line)
                 if (result):
                     prefix = result.group(1)
-                    if (not varName):
+                    if (not prefix):
                         prefix = result.group(2)
                     arr.append(prefix + "'")
                     for entry in yaml_load("[" + result.group(3) + "]"):

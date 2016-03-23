@@ -64,6 +64,7 @@ def decode_parameter_name(name):
 def import_script(filename, template):
     # the "var " prefix is to support javascript as well
     VAR_DECL_RE = re.compile(r'^(\s*var\s+)?CF_([^\s=]+)=')
+    EMBED_DECL_RE = re.compile(r'^(.*?=)?(.*?)(?:(?:#|//)CF(.*))')
     arr = []
     with open(filename) as f:
         for line in f:
@@ -82,7 +83,17 @@ def import_script(filename, template):
                 else:
                     arr.append("'\n")
             else:
-                arr.append(line)
+                result = EMBED_DECL_RE.match(line)
+                if (result):
+                    prefix = result.group(1)
+                    if (not varName):
+                        prefix = result.group(2)
+                    arr.append(prefix + "'")
+                    for entry in yaml_load("[" + result.group(3) + "]"):
+                        arr.append(entry)
+                    arr.append("'\n")
+                else:
+                    arr.append(line)
     return arr
 
 def resolve_file(file, basefile):

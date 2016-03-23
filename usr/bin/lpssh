@@ -33,16 +33,18 @@ else
     echo "$1 mapping not found"
     exit 1
   fi
-  KEY_NAME=$(egrep "^$1:" $TMP | cut -d: -f2-)
+  KEY_NAMES=$(egrep "^$1:" $TMP | cut -d: -f2-)
 fi
 if  ! eval "$(ssh-agent)" > $IOTMP; then
   echo "Failed to start ssh agent"
   cat $IOTMP
   exit 1
 fi
-if ! lpass show --notes $KEY_NAME | ssh-add - > $IOTMP 2>&1; then
-  echo "Failed to add key"
-  cat $IOTMP
-  exit 1
-fi
+for KEY_NAME in $KEY_NAMES; do
+  if ! lpass show --notes $KEY_NAME | ssh-add - > $IOTMP 2>&1; then
+    echo "Failed to add key"
+    cat $IOTMP
+    exit 1
+  fi
+done
 ssh "$@"

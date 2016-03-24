@@ -256,7 +256,8 @@ jenkins_set_home () {
       echo "Unkown system type $SYSTEM_TYPE"
       exit 1
   esac
-  sed -i 's/JENKINS_HOME=.*/JENKINS_HOME=\/var\/lib\/jenkins\/jenkins-home/g' $SYSCONFIG
+  sed -i -e 's/JENKINS_HOME=.*/JENKINS_HOME=\/var\/lib\/jenkins\/jenkins-home/g' \
+  -e 's/\(JENKINS_JAVA_OPTIONS=\"[^\"]*\)\"/\1 -Dhudson.model.DirectoryBrowserSupport.CSP=\"/g' $SYSCONFIG
 }
 
 jenkins_disable_and_shutdown_service () {

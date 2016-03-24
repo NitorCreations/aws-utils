@@ -276,13 +276,16 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
                 stack_params = stacks[stack_key]
             else:
                 describe_stack_command = [ 'show-stack-params-and-outputs.sh', region, stack_name ]
-                p = subprocess.Popen(describe_stack_command,
-                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-                output = p.communicate()
-                if p.returncode:
-                    sys.exit("Describe stack failed: " + output[1])
-                stack_params = json_load(output[0])
-                stacks[stack_key] = stack_params
+                try:
+                    p = subprocess.Popen(describe_stack_command,
+                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+                    output = p.communicate()
+                    if p.returncode:
+                        sys.exit("Describe stack failed: " + output[1])
+                    stack_params = json_load(output[0])
+                    stacks[stack_key] = stack_params
+                except OSError as e:
+                    sys.exit("Describe stack failed: " + e.strerror + "\nIs show-stack-params-and-outputs.sh available on your $PATH?")
             if (not stack_param in stack_params):
                 sys.exit("Did not find value for: " + stack_param + " in stack " + stack_name)
             data = stack_params[stack_param]

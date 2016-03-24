@@ -90,6 +90,8 @@ def import_script(filename, template):
                         prefix = result.group(2)
                     arr.append(prefix + "'")
                     for entry in yaml_load("[" + result.group(3) + "]"):
+                        if ('Ref' in entry):
+                            entry['__source'] = filename
                         arr.append(entry)
                     arr.append("'\n")
                 else:

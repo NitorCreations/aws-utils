@@ -68,6 +68,7 @@ PolicyDocument:
     - iam:PutRolePolicy
     - iam:RemoveRoleFromInstanceProfile
     - iam:UpdateAssumeRolePolicy
+    - lambda:CreateFunction
     - rds:DescribeDBInstances
     - route53:ChangeResourceRecordSets
     - route53:GetChange

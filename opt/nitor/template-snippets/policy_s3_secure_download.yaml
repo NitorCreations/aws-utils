@@ -14,7 +14,7 @@
 
 # @param bucket the S3 bucket
 # @param file the file, or wildcard
-PolicyName: allowS3SecDl((bucket))
+PolicyName: allowS3SecureDownload
 PolicyDocument:
   Version: '2012-10-17'
   Statement:

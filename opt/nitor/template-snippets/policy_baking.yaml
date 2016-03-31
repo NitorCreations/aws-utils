@@ -48,6 +48,7 @@ PolicyDocument:
     - iam:DeleteRole
     - iam:DeleteRolePolicy
     - iam:GetRole
+    - iam:ListInstanceProfiles
     - iam:PassRole
     - iam:PutRolePolicy
     - iam:RemoveRoleFromInstanceProfile

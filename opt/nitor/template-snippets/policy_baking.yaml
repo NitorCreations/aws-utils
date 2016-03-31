@@ -20,23 +20,7 @@ PolicyDocument:
   - Effect: Allow
     Resource: '*'
     Action:
-    - autoscaling:CreateAutoScalingGroup
-    - autoscaling:CreateLaunchConfiguration
-    - autoscaling:CreateOrUpdateTags
-    - autoscaling:DeleteAutoScalingGroup
-    - autoscaling:DeleteLaunchConfiguration
-    - autoscaling:DescribeAutoScalingGroups
-    - autoscaling:DescribeAutoScalingInstances
-    - autoscaling:DescribeLaunchConfigurations
-    - autoscaling:DescribeScalingActivities
-    - autoscaling:DescribeScheduledActions
-    - autoscaling:SetDesiredCapacity
-    - autoscaling:TerminateInstanceInAutoScalingGroup
-    - autoscaling:UpdateAutoScalingGroup
-    - cloudformation:CreateStack
-    - cloudformation:DeleteStack
     - cloudformation:DescribeStacks
-    - cloudformation:UpdateStack
     - ec2:AuthorizeSecurityGroupEgress
     - ec2:AuthorizeSecurityGroupIngress
     - ec2:CopyImage
@@ -68,12 +52,4 @@ PolicyDocument:
     - iam:PutRolePolicy
     - iam:RemoveRoleFromInstanceProfile
     - iam:UpdateAssumeRolePolicy
-    - lambda:CreateFunction
-    - lambda:DeleteFunction
-    - rds:DescribeDBInstances
-    - route53:ChangeResourceRecordSets
-    - route53:GetChange
-    - route53:GetChangeRequest
-    - route53:ListHostedZones
-    - sts:AssumeRole
     - sts:DecodeAuthorizationMessage

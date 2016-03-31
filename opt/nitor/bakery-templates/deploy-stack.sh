@@ -44,4 +44,9 @@ fi
 export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra-<branch>.properties files
 export paramAmi=$AMI_ID
 
+#If assume-deploy-role.sh is on the path, run it to assume the appropriate role for deployment
+if which assume-deploy-role.sh > /dev/null; then
+  eval $(assume-deploy-role.sh)
+fi
+
 aws-utils/cloudformation-update-stack.py "${STACK_NAME}" "${image}/stack-${ORIG_STACK_NAME}/template.yaml" "$REGION"

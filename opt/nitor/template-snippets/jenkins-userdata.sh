@@ -61,7 +61,6 @@ jenkins_setup_dotssh
 jenkins_mount_ebs_home ${CF_paramEBSSize}
 jenkins_setup_default_gitignore
 jenkins_fetch_repo
-jenkins_merge_default_install_with_repo
 jenkins_setup_git_sync_script
 jenkins_setup_git_sync_on_shutdown
 jenkins_setup_git_sync_job

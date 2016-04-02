@@ -25,6 +25,17 @@ jenkins_setup_dotssh () {
   ssh-keygen -y -f /var/lib/jenkins/.ssh/id_rsa > /var/lib/jenkins/.ssh/id_rsa.pub
   chmod 400 /var/lib/jenkins/.ssh/id_rsa.pub
   ssh-keyscan -t rsa github.com >> /var/lib/jenkins/.ssh/known_hosts
+  cat > /var/lib/jenkins/.gitconfig << MARKER
+[user]
+	email = jenkins@${CF_paramDnsName}
+	name = Jenkins
+[push]
+	default = simple
+[branch]
+	autosetuprebase = always
+[pull]
+	rebase = true
+MARKER
   chown -R jenkins:jenkins /var/lib/jenkins/
 }
 
@@ -53,7 +64,8 @@ MARKER
 }
 
 jenkins_setup_default_gitignore () {
-  cat > /var/lib/jenkins-default/.gitignore << EOF
+  if [ ! -e /var/lib/jenkins/jenkins-home/.gitignore ]; then
+    cat > /var/lib/jenkins/jenkins-home/.gitignore << EOF
 *.csv
 *.log
 builds
@@ -75,6 +87,7 @@ secrets
 workspace
 jenkins.war*
 EOF
+  fi
   chown -R jenkins:jenkins /var/lib/jenkins-default/
 }
 
@@ -93,37 +106,6 @@ jenkins_fetch_repo () {
     sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git --work-tree=/var/lib/jenkins/jenkins-home checkout master
   else
     echo "Created EBS backed jenkins config"
-  fi
-}
-
-jenkins_merge_default_install_with_repo () {
-  if [ -e /var/lib/jenkins/jenkins-home/config.xml ]; then
-    echo "Git repository contains Jenkins config - using that with base files from default installation"
-    {
-      cat /var/lib/jenkins-default/.gitignore
-      [ ! -e /var/lib/jenkins/jenkins-home/.gitignore ] || cat /var/lib/jenkins/jenkins-home/.gitignore
-    } | while read pattern ; do
-	  case "$pattern" in
-	    /*)
-              eval mv -v /var/lib/jenkins-default${pattern} /var/lib/jenkins/jenkins-home/ ||:
-	      ;;
-	    *)
-	      (
-		cd /var/lib/jenkins-default/
-		find -name "$pattern" | \
-		  while read entry ; do
-		    dest="/var/lib/jenkins/jenkins-home/${entry}"
-		    destdir="$(dirname "${dest}")"
-		    mkdir -p "$destdir"
-		    mv -v "$entry" "$dest"
-		  done
-	      )
-	      ;;
-	  esac
-	done
-  else
-    echo "Git repository empty - using default jenkins installation a base"
-    mv -v /var/lib/jenkins-default/* /var/lib/jenkins-default/.??* /var/lib/jenkins/jenkins-home/
   fi
 }
 

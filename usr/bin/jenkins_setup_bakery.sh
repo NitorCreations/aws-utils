@@ -46,7 +46,7 @@ patchcreds () {
 }
 
 patchurl () {
-  perl -pe 's!GIT_URL!'"${REPO_URL}"'!g;'
+  perl -pe 's!GIT_URL!'"${REPO_URL/@/\\@}"'!g;';
 }
 
 create_job () {

@@ -45,7 +45,7 @@ cache () {
 [ "$SUBNET" ] || SUBNET="$(cache show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
 [ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
 [ "$AMIBAKE_INSTANCEPROFILE" ] || AMIBAKE_INSTANCEPROFILE="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceInstanceprofile)"
-
+[ "$PAUSE_SECONDS" ] || PAUSE_SECONDS=15
 for var in REGION SUBNET SECURITY_GROUP AMIBAKE_INSTANCEPROFILE ; do
   [ "${!var}" ] || die "Could not determine $var automatically. Please set ${var} manually in ${infrapropfile}"
 done
@@ -138,6 +138,7 @@ if python -u $(which ansible-playbook) \
   -e subnet_id=$SUBNET \
   -e sg_id=$SECURITY_GROUP \
   -e amibake_instanceprofile=$AMIBAKE_INSTANCEPROFILE \
+  -e pause_seconds=$PAUSE_SECONDS \
    ; then
 
   echo "AMI_ID=$(cat ami-id.txt)" > ami.properties

@@ -19,9 +19,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 case  "$SYSTEM_TYPE" in
   ubuntu)
     APACHE_SSL_CONF=/etc/apache2/sites-enabled/default-ssl.conf
+    APACHE_WELCOME_CONF=/etc/apache2/sites-enabled/welcome.conf
     ;;
   centos|fedora)
     APACHE_SSL_CONF=/etc/httpd/conf.d/ssl.conf
+    APACHE_WELCOME_CONF=/etc/httpd/conf.d/welcome.conf
     ;;
   *)
     echo "Unknown system type $SYSTEM_TYPE"
@@ -30,8 +32,8 @@ case  "$SYSTEM_TYPE" in
 esac
 
 apache_replace_domain_vars () {
-  check_parameters APACHE_SSL_CONF CF_paramDnsName
-  perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g;s!%zone%!'"${CF_paramDnsName#*.}"'!g'  ${APACHE_SSL_CONF}
+  check_parameters APACHE_SSL_CONF APACHE_WELCOME_CONF CF_paramDnsName
+  perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g;s!%zone%!'"${CF_paramDnsName#*.}"'!g'  ${APACHE_SSL_CONF} ${APACHE_WELCOME_CONF}
 }
 
 perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }
@@ -76,7 +78,7 @@ MARK
   fi
   mkdir -p /etc/certs
   chmod 700 /etc/certs
-  cat >> ${APACHE_SSL_CONF} << MARK
+  cat >> ${APACHE_SSL_CONF} << MARKER
   ServerName https://%domain%
   Alias /.well-known /var/www/%domain%/.well-known
   SSLProtocol all -SSLv2 -SSLv3
@@ -98,7 +100,16 @@ NameVirtualHost *:80
    ServerName %domain%
    Redirect permanent / https://%domain%/
 </VirtualHost>
-MARK
+MARKER
+
+cat >> ${APACHE_WELCOME_CONF} << MARKER
+<VirtualHost *:80>
+   ServerName %domain%
+   DocumentRoot /var/www/html
+   Redirect permanent / https://%domain%/
+</VirtualHost>
+MARKER
+
   if [ "$SYSTEM_TYPE" = "ubuntu" ]; then
     echo '</IfModule>' >> ${APACHE_SSL_CONF}
   fi

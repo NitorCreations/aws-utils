@@ -17,11 +17,11 @@
 set -xe
 
 if [ -z "$1" ]; then
-  AWSUTILS_VERSION=0.57
+  AWSUTILS_VERSION=0.73
 else
   AWSUTILS_VERSION="$1"
 fi
 
 UTILS_VERSION=$AWSUTILS_VERSION
-wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
+curl -Ls https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
 echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version

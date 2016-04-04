@@ -90,7 +90,7 @@
         home: "{{ app_home }}"
         createhome: yes
     - shell: bash -c 'sleep 54m ; shutdown -P +1' &
-    - command: /bin/mkdir -m 755 -p /opt/nitor
+    - script: ../install_tools.sh {{ tools_version }}
     - copy: src="{{ fetch_secrets }}" dest=/opt/nitor/fetch-secrets.sh owner=root group=root mode=0755
     - script: "{{ imagedir }}/pre_install.sh"
     - apt_key: url="{{ item }}" state=present
@@ -111,7 +111,6 @@
     - yum: name={{ item }}
       with_items: "{{ packages }}"
       when: ansible_os_family == "RedHat"
-    - script: ../install_tools.sh {{ tools_version }}
     - script: "{{ imagedir }}/post_install.sh"
 
 - name: Create AMI from deployed instance

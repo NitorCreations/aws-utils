@@ -44,13 +44,16 @@ apache_install_certs () {
   (
     perlgrep '^\s*(SSLCertificateFile|SSLCertificateKeyFile|SSLCACertificateFile)' ${APACHE_SSL_CONF} | awk '{ print $2 }'
   ) | sort -u | xargs /opt/nitor/fetch-secrets.sh get 444
-  CONF_CHAIN=$(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} | awk '{ print $2 }')
-  if ! /opt/nitor/fetch-secrets.sh get 444 "/etc/certs/${CF_paramDnsName}.chain"; then
-    /opt/nitor/fetch-secrets.sh get 444 "/etc/certs/$DOMAIN.chain"
-    FETCHED_CHAIN="/etc/certs/$DOMAIN.chain"
-  else
-    FETCHED_CHAIN="/etc/certs/${CF_paramDnsName}.chain"
-  fi
+  CONF_CHAIN=$(perlgrep '^\s*SSLCertificateChainFile' ${APACHE_SSL_CONF} \
+    | awk '{ print $2 }')
+  for CHAIN in "/etc/certs/${CF_paramDnsName}.chain" "/etc/certs/$DOMAIN.chain" \
+    "$CONF_CHAIN"; do
+    if /opt/nitor/fetch-secrets.sh get 444 "$CHAIN"; then
+        FETCHED_CHAIN="$CHAIN"
+        break
+    fi
+  done
+  [ -n "$FETCHED_CHAIN" ]
   if [ "$CONF_CHAIN" != "$FETCHED_CHAIN" ]; then
     ln -snfv "$FETCHED_CHAIN" "$CONF_CHAIN"
   fi
@@ -93,12 +96,6 @@ MARK
   ProxyRequests Off
   ProxyPreserveHost On
   ProxyTimeout 600
-</VirtualHost>
-
-NameVirtualHost *:80
-<VirtualHost *:80>
-   ServerName %domain%
-   Redirect permanent / https://%domain%/
 </VirtualHost>
 MARKER
 

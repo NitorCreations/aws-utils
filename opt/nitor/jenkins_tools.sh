@@ -42,6 +42,7 @@ MARKER
 jenkins_mount_home () {
   encrypt-and-mount.sh /dev/xvdb /var/lib/jenkins/jenkins-home
   chown -R jenkins:jenkins /var/lib/jenkins/jenkins-home
+  ln -snf /var/lib/jenkins/jenkins-home/.m2 /var/lib/jenkins/.m2
 }
 
 jenkins_mount_ebs_home () {
@@ -60,7 +61,7 @@ MARKER
 45 4 * * * root /usr/bin/clean-snapshots.sh ${CF_resourceDeleteSnapshotsLambda} >> /var/log/snapshots.log 2>&1
 MARKER
   fi
-
+  ln -snf /var/lib/jenkins/jenkins-home/.m2 /var/lib/jenkins/.m2
 }
 
 jenkins_setup_default_gitignore () {
@@ -86,6 +87,7 @@ secret.key
 secrets
 workspace
 jenkins.war*
+.m2/repository
 EOF
   fi
   chown -R jenkins:jenkins /var/lib/jenkins-default/

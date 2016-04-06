@@ -17,14 +17,15 @@ cleanup() {
   fi
 }
 trap cleanup EXIT
-
-if  [ "$1" = "-k" ]; then
-  shift
-  KEY_NAME=$1
-  shift
+IOTMP=$(mktemp)
+if [ "$1" = "-k" ]; then
+  while  [ "$1" = "-k" ]; do
+    shift
+    KEY_NAMES="$KEY_NAMES $1"
+    shift
+  done
 else
   TMP=$(mktemp)
-  IOTMP=$(mktemp)
   if ! lpass show --notes my-ssh-mappings > $TMP; then
     echo "Failed to get mappings"
     exit 1
@@ -47,4 +48,4 @@ for KEY_NAME in $KEY_NAMES; do
     exit 1
   fi
 done
-ssh "$@"
+ssh -A "$@"

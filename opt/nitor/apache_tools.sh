@@ -99,7 +99,7 @@ MARK
 </VirtualHost>
 MARKER
 
-cat >> ${APACHE_WELCOME_CONF} << MARKER
+cat > ${APACHE_WELCOME_CONF} << MARKER
 <VirtualHost *:80>
    ServerName %domain%
    DocumentRoot /var/www/html

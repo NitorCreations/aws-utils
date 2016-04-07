@@ -105,7 +105,7 @@ jenkins_fetch_repo () {
       sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git remote add -f -t master origin ${CF_paramJenkinsGit}
     fi
     echo "Checking out jenkins config git repo ${CF_paramJenkinsGit}"
-    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git --work-tree=/var/lib/jenkins/jenkins-home checkout master
+    sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git --work-tree=/var/lib/jenkins/jenkins-home checkout -f master
   else
     echo "Created EBS backed jenkins config"
   fi

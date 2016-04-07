@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -e
 
 # Copyright 2016 Nitor Creations Oy
 #

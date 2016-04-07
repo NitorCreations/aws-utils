@@ -17,8 +17,8 @@
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
 configure_and_start_nexus () {
-  check_parameters CF_paramDnsName
-  volume-from-snapshot.sh nexus-data nexus-data /opt/nexus/sonatype-work 20
+  check_parameters CF_paramDnsName CF_paramSonatypeWorkSize
+  volume-from-snapshot.sh nexus-data nexus-data /opt/nexus/sonatype-work ${CF_paramSonatypeWorkSize}
   chown -R nexus:nexus /opt/nexus/sonatype-work
 
   if ! [ -r /opt/nexus/sonatype-work/nexus/conf/security.xml ]; then
@@ -56,6 +56,6 @@ nexus_wait_service_up () {
 
 nexus_setup_snapshot_cron () {
   cat > /etc/cron.d/home-snapshot << MARKER
-30 * * * * root /usr/bin/snapshot-from-volume.sh nexus-data nexus-data /opt/nexus/sonatype-work
+30 * * * * root /usr/bin/snapshot-from-volume.sh nexus-data nexus-data /opt/nexus/sonatype-work >> /var/log/snapshots.log 2>&1
 MARKER
 }

@@ -21,6 +21,7 @@ CF_paramAwsUtilsVersion=""
 CF_paramAmi=""
 CF_paramAmiName=""
 CF_paramEip=""
+CF_paramSonatypeWorkSize="20"
 
 export HOME=/root
 cd $HOME

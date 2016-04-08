@@ -22,7 +22,7 @@ import tempfile
 import collections
 import time
 
-def undeploy(stack_name):
+def undeploy(stack_name, region):
 
     # Disable buffering, from http://stackoverflow.com/questions/107705/disable-output-buffering
     sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -30,7 +30,7 @@ def undeploy(stack_name):
     print("\n\n**** Uneploying stack '" + stack_name + "'")
 
     # Load previous stack information to see if it has been deployed at all
-    describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', '--stack-name', stack_name ]
+    describe_stack_command = [ 'aws', 'cloudformation', 'describe-stacks', "--region", region, '--stack-name', stack_name ]
     print("Checking for previous stack info: " + str(describe_stack_command))
     p = subprocess.Popen(describe_stack_command,
                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -50,7 +50,7 @@ def undeploy(stack_name):
     # Delete stack
 
     stack_command = \
-        ['aws', 'cloudformation', 'delete-stack', '--stack-name',
+        ['aws', 'cloudformation', "--region", region, 'delete-stack', '--stack-name',
          stack_name
          ]
 
@@ -87,6 +87,6 @@ def undeploy(stack_name):
     print("Done!")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        sys.exit("Usage: undeploy.py stack_name")
-    undeploy(sys.argv[1])
+    if len(sys.argv) != 3:
+        sys.exit("Usage: undeploy.py stack_name region")
+    undeploy(sys.argv[1], sys.argv[2])

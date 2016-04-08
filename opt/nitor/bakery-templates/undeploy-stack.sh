@@ -24,4 +24,4 @@ source aws-utils/source_infra_properties.sh "$image" "$stackName"
 #export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra-<branch>.properties files
 #export paramAmi=$AMI_ID
 
-aws-utils/cloudformation-delete-stack.py "${STACK_NAME}"
+aws-utils/cloudformation-delete-stack.py "${STACK_NAME}" "$REGION"

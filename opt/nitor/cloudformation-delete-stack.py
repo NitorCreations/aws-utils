@@ -50,7 +50,7 @@ def undeploy(stack_name, region):
     # Delete stack
 
     stack_command = \
-        ['aws', 'cloudformation', "--region", region, 'delete-stack', '--stack-name',
+        ['aws', 'cloudformation', 'delete-stack', "--region", region, '--stack-name',
          stack_name
          ]
 

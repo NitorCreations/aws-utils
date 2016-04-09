@@ -106,7 +106,7 @@ jenkins_fetch_repo () {
     fi
     echo "Checking out jenkins config git repo ${CF_paramJenkinsGit}"
     #Either the correct gitignore is created via the checkout, or the default one is added later
-    rm /var/lib/jenkins/jenkins-home/.gitignore
+    rm -f /var/lib/jenkins/jenkins-home/.gitignore
     sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git --work-tree=/var/lib/jenkins/jenkins-home checkout -f master
   else
     echo "Created EBS backed jenkins config"

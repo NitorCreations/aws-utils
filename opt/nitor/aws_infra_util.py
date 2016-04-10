@@ -50,7 +50,7 @@ def json_load(stream):
     return json.loads(stream, object_pairs_hook=collections.OrderedDict)
 
 def json_save(data):
-    return json.dumps(data, indent=4)
+    return json.dumps(data, indent=2)
 
 ############################################################################
 # import_scripts

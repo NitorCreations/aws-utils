@@ -26,7 +26,7 @@ jenkins_setup_dotssh () {
   ssh-keygen -y -f $DOT_SSH_DIR/id_rsa > $DOT_SSH_DIR/id_rsa.pub
   chmod 400 $DOT_SSH_DIR/id_rsa.pub
   if ! ssh-keygen -f $DOT_SSH_DIR/known_hosts -H -F github.com | grep . > /dev/null; then
-    ssh-keyscan -t rsa github.com >> /var/lib/jenkins/.ssh/known_hosts
+    ssh-keyscan -t rsa github.com >> $DOT_SSH_DIR/known_hosts
   fi
   cat > /var/lib/jenkins/jenkins-home/.gitconfig << MARKER
 [user]

@@ -25,10 +25,14 @@ ORIG_STACK_NAME="$1" ; shift
 # by default, prefix stack name with branch name, to avoid accidentally using same names in different branches - override in infra-<branch>.properties to your liking. STACK_NAME and ORIG_STACK_NAME can be assumed to exist.
 STACK_NAME="${GIT_BRANCH##*/}-${ORIG_STACK_NAME}"
 
+sharedpropfile="infra.properties"
 infrapropfile="infra-${GIT_BRANCH##*/}.properties"
 
+[ -e "${sharedpropfile}" ] && source "${sharedpropfile}"
 source "${infrapropfile}"
+[ -e "${image}/${sharedpropfile}" ] && source "${image}/${sharedpropfile}"
 [ -e "${image}/${infrapropfile}" ] && source "${image}/${infrapropfile}"
+[ -e "${image}/stack-${ORIG_STACK_NAME}/${sharedpropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${sharedpropfile}"
 [ -e "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}" ] && source "${image}/stack-${ORIG_STACK_NAME}/${infrapropfile}"
 
 #If region not set in infra files, get the region of the instance

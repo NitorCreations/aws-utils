@@ -57,8 +57,8 @@ set_hostname
 apache_replace_domain_vars
 apache_install_certs
 
-jenkins_setup_dotssh
 jenkins_mount_ebs_home ${CF_paramEBSSize}
+jenkins_setup_dotssh
 jenkins_fetch_repo
 jenkins_setup_default_gitignore
 jenkins_setup_git_sync_script

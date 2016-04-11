@@ -18,14 +18,17 @@ source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
 jenkins_setup_dotssh () {
   check_parameters CF_paramDnsName
-  mkdir -p /var/lib/jenkins/.ssh
-  chmod 700 /var/lib/jenkins/.ssh
-  /opt/nitor/fetch-secrets.sh get 400 /var/lib/jenkins/.ssh/${CF_paramDnsName}.rsa
-  mv -v /var/lib/jenkins/.ssh/*.rsa /var/lib/jenkins/.ssh/id_rsa
-  ssh-keygen -y -f /var/lib/jenkins/.ssh/id_rsa > /var/lib/jenkins/.ssh/id_rsa.pub
-  chmod 400 /var/lib/jenkins/.ssh/id_rsa.pub
-  ssh-keyscan -t rsa github.com >> /var/lib/jenkins/.ssh/known_hosts
-  cat > /var/lib/jenkins/.gitconfig << MARKER
+  DOT_SSH_DIR=/var/lib/jenkins/jenkins-home/.ssh
+  mkdir -p $DOT_SSH_DIR
+  chmod 700 $DOT_SSH_DIR
+  /opt/nitor/fetch-secrets.sh get 400 $DOT_SSH_DIR/${CF_paramDnsName}.rsa
+  mv -v $DOT_SSH_DIR/${CF_paramDnsName}.rsa $DOT_SSH_DIR/id_rsa
+  ssh-keygen -y -f $DOT_SSH_DIR/id_rsa > $DOT_SSH_DIR/id_rsa.pub
+  chmod 400 $DOT_SSH_DIR/id_rsa.pub
+  if ! ssh-keygen -f $DOT_SSH_DIR/known_hosts -H -F github.com | grep . > /dev/null; then
+    ssh-keyscan -t rsa github.com >> /var/lib/jenkins/.ssh/known_hosts
+  fi
+  cat > /var/lib/jenkins/jenkins-home/.gitconfig << MARKER
 [user]
 	email = jenkins@${CF_paramDnsName}
 	name = Jenkins
@@ -42,7 +45,7 @@ MARKER
 jenkins_mount_home () {
   encrypt-and-mount.sh /dev/xvdb /var/lib/jenkins/jenkins-home
   chown -R jenkins:jenkins /var/lib/jenkins/jenkins-home
-  ln -snf /var/lib/jenkins/jenkins-home/.m2 /var/lib/jenkins/.m2
+  usermod -d /var/lib/jenkins/jenkins-home jenkins
 }
 
 jenkins_mount_ebs_home () {
@@ -53,6 +56,7 @@ jenkins_mount_ebs_home () {
   fi
   local MOUNT_PATH=/var/lib/jenkins/jenkins-home
   volume-from-snapshot.sh ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH  $SIZE
+  usermod -d /var/lib/jenkins/jenkins-home jenkins
   cat > /etc/cron.d/${CF_paramEBSTag}-snapshot << MARKER
 30 * * * * root /usr/bin/snapshot-from-volume.sh -w ${CF_paramEBSTag} ${CF_paramEBSTag} $MOUNT_PATH >> /var/log/snapshots.log 2>&1
 MARKER
@@ -61,7 +65,6 @@ MARKER
 45 4 * * * root /usr/bin/clean-snapshots.sh ${CF_resourceDeleteSnapshotsLambda} >> /var/log/snapshots.log 2>&1
 MARKER
   fi
-  ln -snf /var/lib/jenkins/jenkins-home/.m2 /var/lib/jenkins/.m2
 }
 
 jenkins_setup_default_gitignore () {
@@ -88,6 +91,7 @@ secrets
 workspace
 jenkins.war*
 .m2/repository
+.ssh
 EOF
   fi
   chown -R jenkins:jenkins /var/lib/jenkins-default/
@@ -202,6 +206,7 @@ EOF
 
 jenkins_git_commit () {
   chown -R jenkins:jenkins /var/lib/jenkins
+  chown -R jenkins:jenkins /var/lib/jenkins/jenkins-home
   if [ -n "${CF_paramJenkinsGit}" ]; then
     sudo -iu jenkins git --git-dir=/var/lib/jenkins/jenkins-home/.git \
          --work-tree=/var/lib/jenkins/jenkins-home add .

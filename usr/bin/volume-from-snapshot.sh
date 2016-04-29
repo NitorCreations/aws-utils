@@ -36,7 +36,7 @@ if ! SNAPSHOT_ID=$(find_latest_snapshot $SNAPSHOT_LOOKUP_TAG_KEY $SNAPSHOT_LOOKU
     fail $ERROR
   fi
   EMPTY_VOLUME=1
-elif ! VOLUME_ID=$(create_volume $SNAPSHOT_ID); then
+elif ! VOLUME_ID=$(create_volume $SNAPSHOT_ID $SIZE_GB); then
   fail $ERROR
 fi
 
@@ -59,6 +59,11 @@ fi
 
 if [ -n "$EMPTY_VOLUME" ]; then
   mkfs.ext4 $DEVICE
+else
+  SNAPSHOT_SIZE=$(aws ec2 describe-snapshots --snapshot-ids $SNAPSHOT_ID | jq -r ".Snapshots[0]|.VolumeSize")
+  if [ "$SNAPSHOT_SIZE" != "$SIZE_GB" ]; then
+    resize2fs $DEVICE
+  fi
 fi
 
 delete_on_termination $DEVICE

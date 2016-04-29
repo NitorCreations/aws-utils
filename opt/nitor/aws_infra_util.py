@@ -52,6 +52,9 @@ def json_load(stream):
 def json_save(data):
     return json.dumps(data, indent=2)
 
+def json_save_small(data):
+    return json.dumps(data, indent=None)
+
 ############################################################################
 # import_scripts
 

@@ -62,6 +62,7 @@ def deploy(stack_name, yaml_template, region):
         template_parameters['paramAmiCreated'] = collections.OrderedDict([("Description", "AMI Creation Date"), ("Type", "String"), ("Default", "")])
 
     json_template = aws_infra_util.json_save(template_doc)
+    json_small = aws_infra_util.json_save_small(template_doc)
 
     # save result
 
@@ -70,7 +71,7 @@ def deploy(stack_name, yaml_template, region):
     print("")
 
     tmp = tempfile.NamedTemporaryFile(delete=False)
-    tmp.write(json_template)
+    tmp.write(json_small)
     tmp.close()
 
     # Load previous stack information to see if it has been deployed before

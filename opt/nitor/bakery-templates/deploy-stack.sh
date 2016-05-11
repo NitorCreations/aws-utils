@@ -32,7 +32,7 @@ source aws-utils/source_infra_properties.sh "$image" "$stackName"
 if [ ! "$AMI_ID" ] && has_ami_parameter; then
   if [ "$imagejob" ]; then
     JOB=$(echo $imagejob | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
-    AMI_ID="$(aws ec2 describe-images --region=$REGION --filters "Name=name,Values=${JOB}*" | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${JOB}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
+    AMI_ID="$(aws ec2 describe-images --region=$REGION --filters "Name=name,Values=${JOB}_*" | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${JOB}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
     if [ ! "$AMI_ID" ]; then
       echo "AMI_ID job parameter not defined and value could not be determined from parent bake job - aborting"
       exit 1

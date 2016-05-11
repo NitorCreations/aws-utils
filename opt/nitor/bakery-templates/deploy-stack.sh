@@ -30,10 +30,15 @@ shift ||:
 source aws-utils/source_infra_properties.sh "$image" "$stackName"
 
 if [ ! "$AMI_ID" ] && has_ami_parameter; then
-  JOB=$(echo $imagejob | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
-  AMI_ID="$(aws ec2 describe-images --region=$REGION --owners=self | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${JOB}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
-  if [ ! "$AMI_ID" ]; then
-    echo "AMI_ID job parameter not defined and value could not be determined from parent bake job - aborting"
+  if [ "$imagejob" ]; then
+    JOB=$(echo $imagejob | sed 's/\W/_/g' | tr '[:upper:]' '[:lower:]')
+    AMI_ID="$(aws ec2 describe-images --region=$REGION --filters "Name=name,Values=${JOB}*" | jq -r ".Images[] | .Name + \"=\" + .ImageId" | grep "^${JOB}_[0-9][0-9][0-9][0-9]=" | sort | tail -1 | cut -d= -f 2)"
+    if [ ! "$AMI_ID" ]; then
+      echo "AMI_ID job parameter not defined and value could not be determined from parent bake job - aborting"
+      exit 1
+    fi
+  else
+    echo "AMI_ID job parameter not defined and no bake job name given - aborting"
     exit 1
   fi
   echo "Using AMI_ID $AMI_ID from last successful bake"

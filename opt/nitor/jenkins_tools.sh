@@ -248,7 +248,7 @@ jenkins_set_home () {
       exit 1
   esac
   sed -i -e 's/JENKINS_HOME=.*/JENKINS_HOME=\/var\/lib\/jenkins\/jenkins-home/g' \
-  -e 's/\(JENKINS_JAVA_OPTIONS=\"[^\"]*\)\"/\1 -Dhudson.model.DirectoryBrowserSupport.CSP=\"/g' $SYSCONFIG
+  -e 's/\(JENKINS_JAVA_OPTIONS=\"[^\"]*\)\"/\1 -Dhudson.model.DirectoryBrowserSupport.CSP= -Djava.awt.headless=true -Dhudson.model.User.SECURITY_243_FULL_DEFENSE=false -Dhudson.model.ParametersAction.keepUndefinedParameters=true\"/g' $SYSCONFIG
 }
 
 jenkins_disable_and_shutdown_service () {

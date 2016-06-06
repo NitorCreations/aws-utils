@@ -33,7 +33,8 @@ esac
 
 apache_replace_domain_vars () {
   check_parameters APACHE_SSL_CONF APACHE_WELCOME_CONF CF_paramDnsName
-  perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g;s!%zone%!'"${CF_paramDnsName#*.}"'!g'  ${APACHE_SSL_CONF} ${APACHE_WELCOME_CONF}
+  CERTNAME=${CF_paramDnsName//./_}
+  perl -i -pe 's!%domain%!'"${CF_paramDnsName}"'!g;s!%zone%!'"${CF_paramDnsName#*.}"'!g;s!%certname%!'"${CERTNAME}"'!g'  ${APACHE_SSL_CONF} ${APACHE_WELCOME_CONF}
 }
 
 perlgrep () { local RE="$1" ; shift ; perl -ne 'print if(m!'"$RE"'!)' "$@" ; }

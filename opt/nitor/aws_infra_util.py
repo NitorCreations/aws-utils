@@ -93,8 +93,7 @@ def import_script(filename, template):
                         prefix = result.group(2)
                     arr.append(prefix + "'")
                     for entry in yaml_load("[" + result.group(3) + "]"):
-                        if ('Ref' in entry):
-                            entry['__source'] = filename
+                        apply_source(entry, filename)
                         arr.append(entry)
                     arr.append("'\n")
                 else:
@@ -189,6 +188,15 @@ def apply_params(data, params):
                 prevEnd = span[1];
         data = res + data[prevEnd:]
     return data
+
+# Applies recursively source to script inline expression
+def apply_source(data, filename):
+    if (isinstance(data, collections.OrderedDict)):
+        if ('Ref' in data):
+            data['__source'] = filename
+        for k,v in data.items():
+            apply_source(k, filename)
+            apply_source(v, filename)
 
 # returns new data
 def import_scripts_pass1(data, basefile, path):

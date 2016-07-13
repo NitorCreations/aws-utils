@@ -21,7 +21,7 @@ logged_file=/dev/shm/fetch-secrets-logged
 
 login_if_not_already () {
   if [ ! -e $logged_file ]; then
-    s3-role-download.sh ${CF_paramSecretsBucket} webmaster.pwd - | lastpass-login.sh ${CF_paramSecretsUser} -
+    s3-role-download.sh ${CF_paramSecretsBucket} webmaster.pwd - | lastpass-login.sh ${CF_paramSecretsUser} - > /dev/null 2>&1
     touch $logged_file
   fi
 }

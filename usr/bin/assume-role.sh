@@ -14,10 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
-
-CF_paramBakeRoleStack="bakery-roles"
-CF_AWS__Region="eu-west-1"
-
-ROLE_ARN=$(show-stack-params-and-outputs.sh ${CF_AWS__Region} ${CF_paramBakeRoleStack} | jq -r .deployRoleArn)
-assume-role.sh $ROLE_ARN
+aws sts assume-role --role-arn $1 --role-session-name amibakery-deploy | jq -er .Credentials | jq -r '@text "AWS_ACCESS_KEY_ID=\"\(.AccessKeyId)\"\nAWS_SECRET_ACCESS_KEY=\"\(.SecretAccessKey)\"\nAWS_SESSION_TOKEN=\"\(.SessionToken)\"\nexport AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN"'

@@ -14,4 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-aws sts assume-role --role-arn $1 --role-session-name amibakery-deploy | jq -er .Credentials | jq -r '@text "AWS_ACCESS_KEY_ID=\"\(.AccessKeyId)\"\nAWS_SECRET_ACCESS_KEY=\"\(.SecretAccessKey)\"\nAWS_SESSION_TOKEN=\"\(.SessionToken)\"\nexport AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN"'
+aws sts assume-role --role-arn $1 --role-session-name \
+  assumed-role-$(cat /dev/urandom | tr -cd [:alnum:] | head -c 4) \
+  | jq -er .Credentials \
+  | jq -r '@text "AWS_ACCESS_KEY_ID=\"\(.AccessKeyId)\"\nAWS_SECRET_ACCESS_KEY=\"\(.SecretAccessKey)\"\nAWS_SESSION_TOKEN=\"\(.SessionToken)\"\nexport AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN"'

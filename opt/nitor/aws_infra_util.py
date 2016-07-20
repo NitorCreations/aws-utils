@@ -66,8 +66,8 @@ def decode_parameter_name(name):
 
 def import_script(filename, template):
     # the "var " prefix is to support javascript as well
-    VAR_DECL_RE = re.compile(r'^(\s*var\s+)?CF_([^\s=]+)=')
-    EMBED_DECL_RE = re.compile(r'^(.*?=)?(.*?)(?:(?:#|//)CF(.*))')
+    VAR_DECL_RE = re.compile(r'^(\s*var\s+)?CF_([^\s=]+)[\s="\']*([^#"\'\`]*)(?:["\'\s\`]*)(#optional)?')
+    EMBED_DECL_RE = re.compile(r'^(.*?=\s*)?(.*?)(?:(?:\`?#|//)CF([^#\`]*))[\`\s]*(#optional)?')
     arr = []
     with open(filename) as f:
         for line in f:
@@ -79,7 +79,10 @@ def import_script(filename, template):
                 ref = collections.OrderedDict()
                 ref['Ref'] = varName
                 ref['__source'] = filename
-                arr.append(line[0:result.end()] + "'")
+                if ("#optional" == str(result.group(4))):
+                    ref['__optional'] = "true"
+                    ref['__default'] = str(result.group(3)).strip(" \"'")
+                arr.append(line[0:result.end(2)] + "='")
                 arr.append(ref)
                 if (jsPrefix):
                     arr.append("';\n")
@@ -91,9 +94,12 @@ def import_script(filename, template):
                     prefix = result.group(1)
                     if (not prefix):
                         prefix = result.group(2)
+                        defaultVal = ""
+                    else:
+                        defaultVal = str(result.group(2)).strip(" \"'")
                     arr.append(prefix + "'")
                     for entry in yaml_load("[" + result.group(3) + "]"):
-                        apply_source(entry, filename)
+                        apply_source(entry, filename, str(result.group(4)), defaultVal)
                         arr.append(entry)
                     arr.append("'\n")
                 else:
@@ -190,13 +196,16 @@ def apply_params(data, params):
     return data
 
 # Applies recursively source to script inline expression
-def apply_source(data, filename):
+def apply_source(data, filename, optional, default):
     if (isinstance(data, collections.OrderedDict)):
         if ('Ref' in data):
             data['__source'] = filename
+            if ("#optional" == optional):
+              data['__optional'] = "true"
+              data['__default'] = default
         for k,v in data.items():
-            apply_source(k, filename)
-            apply_source(v, filename)
+            apply_source(k, filename, optional, default)
+            apply_source(v, filename, optional, default)
 
 # returns new data
 def import_scripts_pass1(data, basefile, path):
@@ -270,14 +279,21 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
             filename = data['__source']
             del data['__source']
             if (not varName in templateParams):
-                print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
-                gotImportErrors = True
+                if ('__optional' in data):
+                  data = data['__default']
+                else:
+                  print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " not declared in template parameters in " + templateFile)
+                  gotImportErrors = True
             else:
                 if (resolveRefs):
                     data = templateParams[varName]
                     if (data == PARAM_NOT_AVAILABLE):
                         print("ERROR: " + path + ": Referenced parameter \"" + varName + "\" in file " + filename + " is resolved later by AWS; cannot resolve its value now")
                         gotImportErrors = True
+            if ('__optional' in data):
+                del data['__optional']
+            if ('__default' in data):
+                del data['__default']
         elif ('StackRef' in data):
             stack_var = import_scripts_pass2(data['StackRef'], templateFile, path + "StackRef_", templateParams, True)
             data.clear()

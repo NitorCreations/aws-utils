@@ -25,9 +25,11 @@ jenkins_setup_dotssh () {
   mv -v $DOT_SSH_DIR/${CF_paramDnsName}.rsa $DOT_SSH_DIR/id_rsa
   ssh-keygen -y -f $DOT_SSH_DIR/id_rsa > $DOT_SSH_DIR/id_rsa.pub
   chmod 400 $DOT_SSH_DIR/id_rsa.pub
-  if ! ssh-keygen -f $DOT_SSH_DIR/known_hosts -H -F github.com | grep . > /dev/null; then
-    ssh-keyscan -t rsa github.com >> $DOT_SSH_DIR/known_hosts
-  fi
+  for SCAN_HOST in "github.com" $CF_extraScanHosts; do
+    if ! ssh-keygen -f $DOT_SSH_DIR/known_hosts -H -F "$SCAN_HOST" | grep . > /dev/null; then
+      ssh-keyscan -t rsa "$SCAN_HOST" >> $DOT_SSH_DIR/known_hosts
+    fi
+  done
   cat > /var/lib/jenkins/jenkins-home/.gitconfig << MARKER
 [user]
 	email = jenkins@${CF_paramDnsName}
@@ -39,7 +41,31 @@ jenkins_setup_dotssh () {
 [pull]
 	rebase = true
 MARKER
-  chown -R jenkins:jenkins /var/lib/jenkins/
+  if [ -n "$CF_paramMvnDeployId" ]; then
+    [ -n "$MAVEN_HOME" ] || MAVEN_HOME=/var/lib/jenkins/jenkins-home/.m2
+    mkdir -p "$MAVEN_HOME"
+    chmod 700 "$MAVEN_HOME"
+    if ! [ -r "$MAVEN_HOME/settings-security.xml" ]; then
+      MASTER_PWD=$(mvn -emp "$(cat /dev/urandom | tr -cd [:alnum:] | head -c 12)")
+      cat > "$MAVEN_HOME/settings-security.xml" << MARKER
+<settingsSecurity>
+  <master>$MASTER_PWD</master>
+</settingsSecurity>
+MARKER
+    chmod 600 "$MAVEN_HOME/settings-security.xml"
+    fi
+    if ! [ -r "$MAVEN_HOME/settings.xml" ]; then
+      cat > "$MAVEN_HOME/settings.xml" << MARKER
+<settings>
+</settings>
+MARKER
+    chmod 600 "$MAVEN_HOME/settings.xml"
+    fi
+    DEPLOYER_PWD=$(/opt/nitor/fetch-secrets.sh show "$CF_paramMvnDeployId")
+    export DEPLOYER_PASSWORD=$(mvn -ep "$DEPLOYER_PWD")
+    add-deployer-server.py "$MAVEN_HOME/settings.xml" "$CF_paramMvnDeployId"
+  fi
+  chown -R jenkins:jenkins /var/lib/jenkins/ /var/lib/jenkins/jenkins-home/
 }
 
 jenkins_mount_home () {

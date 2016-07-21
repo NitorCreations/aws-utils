@@ -33,19 +33,25 @@ def indent(elem, level=0):
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i
 
-tree = ET.parse(sys.argv[1])
-settings = tree.getroot()
-servers = settings.find("./servers")
-if servers is None:
-    servers = ET.SubElement(settings, "servers")
-deployerServer = servers.find("./server[username='" + sys.argv[2] + "']")
-if deployerServer is None:
-    deployerServer = ET.SubElement(servers, "server")
-    ET.SubElement(deployerServer, "id").text = "deploy"
-    ET.SubElement(deployerServer, "username").text = sys.argv[2]
-password = deployerServer.find("./password")
-if password is None:
-    password = ET.SubElement(deployerServer, "password")
-password.text = os.getenv("DEPLOYER_PASSWORD", "password")
-indent(settings)
-tree.write(sys.argv[1], encoding="utf-8")
+def add_server(file, id, username):
+  tree = ET.parse(file)
+  settings = tree.getroot()
+  servers = settings.find("./servers")
+  if servers is None:
+      servers = ET.SubElement(settings, "servers")
+  deployerServer = servers.find("./server[id='" + id + "']")
+  if deployerServer is None:
+      deployerServer = ET.SubElement(servers, "server")
+      ET.SubElement(deployerServer, "id").text = id
+      ET.SubElement(deployerServer, "username")
+  password = deployerServer.find("./password")
+  usernameEl = deployerServer.find("./username")
+  usernameEl.text = username
+  if password is None:
+      password = ET.SubElement(deployerServer, "password")
+  password.text = os.getenv("DEPLOYER_PASSWORD", "password")
+  indent(settings)
+  tree.write(sys.argv[1], encoding="utf-8")
+
+add_server(sys.argv[1], "deploy", sys.argv[2])
+add_server(sys.argv[1], "deploy-release", sys.argv[2])

@@ -60,9 +60,10 @@ MARKER
 </settings>
 MARKER
     chmod 600 "$MAVEN_HOME/settings.xml"
+    chown -R jenkins:jenkins "$MAVEN_HOME"
     fi
     DEPLOYER_PWD=$(/opt/nitor/fetch-secrets.sh show "$CF_paramMvnDeployId")
-    export DEPLOYER_PASSWORD=$(mvn -ep "$DEPLOYER_PWD")
+    export DEPLOYER_PASSWORD=$(sudo -iu jenkins mvn -ep "$DEPLOYER_PWD")
     add-deployer-server.py "$MAVEN_HOME/settings.xml" "$CF_paramMvnDeployId"
   fi
   chown -R jenkins:jenkins /var/lib/jenkins/ /var/lib/jenkins/jenkins-home/

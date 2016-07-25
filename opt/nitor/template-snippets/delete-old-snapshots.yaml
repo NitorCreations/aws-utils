@@ -41,5 +41,6 @@ resourceDeleteSnapshotsLambda:
     Description: 'Deletes snapshots older than a month that have a specific tag key/value'
     Handler: 'index.handler'
     MemorySize: 128
-    Runtime: nodejs
+    Runtime: nodejs4.3
+    Timeout: 300
     Role: {'Fn::GetAtt': [ resourceDeleteSnapshotsRole, Arn ]}

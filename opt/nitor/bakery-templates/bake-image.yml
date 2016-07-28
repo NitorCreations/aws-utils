@@ -82,6 +82,10 @@
 - name: Prepare AMI instance - run pre_install, install/update packages and finally post_install
   hosts: "{{ job_name }}-ami-instance"
   sudo: yes
+  pre_tasks:
+    - name: 'install python2'
+      raw: sudo apt-get -y install python2 python-simplejson
+      when: ansible_os_family == "Debian"
   tasks:
     - user:
         name: "{{ app_user }}"

@@ -79,13 +79,17 @@
     - name: Pause for a bit to work around startup related SSH access denied error
       pause: "seconds={{ pause_seconds }}"
 
-- name: Prepare AMI instance - run pre_install, install/update packages and finally post_install
+- name: Ensure python2 on ubuntu
   hosts: "{{ job_name }}-ami-instance"
-  sudo: yes
-  pre_tasks:
+  sudo: no
+  tasks:
     - name: 'install python2'
       raw: sudo apt-get -y install python2 python-simplejson
       when: ansible_os_family == "Debian"
+
+- name: Prepare AMI instance - run pre_install, install/update packages and finally post_install
+  hosts: "{{ job_name }}-ami-instance"
+  sudo: yes
   tasks:
     - user:
         name: "{{ app_user }}"

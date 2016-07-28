@@ -85,7 +85,7 @@
   gather_facts: no
   tasks:
     - name: 'install python2'
-      raw: lsb_release --id -s | egrep '^Ubuntu$' > /dev/null && sudo apt-get update -qq && sudo apt-get install -qq python2.7
+      raw: lsb_release --id -s | egrep '^Ubuntu$' > /dev/null && sudo apt-get update -qq && sudo apt-get install -qq python2.7 && sudo ln -snf /usr/bin/python2.7 /usr/bin/python
 
 - name: Prepare AMI instance - run pre_install, install/update packages and finally post_install
   hosts: "{{ job_name }}-ami-instance"

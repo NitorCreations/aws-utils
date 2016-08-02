@@ -24,7 +24,7 @@ jenkins_setup_dotssh () {
   /opt/nitor/fetch-secrets.sh get 400 $DOT_SSH_DIR/${CF_paramDnsName}.rsa
   mv -v $DOT_SSH_DIR/${CF_paramDnsName}.rsa $DOT_SSH_DIR/id_rsa
   ssh-keygen -y -f $DOT_SSH_DIR/id_rsa > $DOT_SSH_DIR/id_rsa.pub
-  chmod 400 $DOT_SSH_DIR/id_rsa.pub
+  chmod 400 $DOT_SSH_DIR/*
   for SCAN_HOST in "github.com" $CF_extraScanHosts; do
     if ! ssh-keygen -f $DOT_SSH_DIR/known_hosts -H -F "$SCAN_HOST" | grep . > /dev/null; then
       ssh-keyscan -t rsa "$SCAN_HOST" >> $DOT_SSH_DIR/known_hosts

@@ -24,3 +24,7 @@ resoureInvokeLambdaPolicy:
         Resource: {'Fn::GetAtt': [ resourceDeleteSnapshotsLambda, Arn]}
         Action:
         - 'lambda:InvokeFunction'
+      - Effect: Allow
+        Resource: '*'
+        Action:
+        - 'lambda:CreateFunction'

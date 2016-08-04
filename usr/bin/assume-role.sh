@@ -15,6 +15,6 @@
 # limitations under the License.
 
 aws sts assume-role --role-arn $1 --role-session-name \
-  assumed-role-$(cat /dev/urandom | tr -cd [:alnum:] | head -c 4) \
+  assumed-role-$(dd if=/dev/urandom bs=128 | tr -cd [:alnum:] | head -c 6) \
   | jq -er .Credentials \
   | jq -r '@text "AWS_ACCESS_KEY_ID=\"\(.AccessKeyId)\"\nAWS_SECRET_ACCESS_KEY=\"\(.SecretAccessKey)\"\nAWS_SESSION_TOKEN=\"\(.SessionToken)\"\nexport AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN"'

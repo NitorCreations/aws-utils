@@ -15,7 +15,7 @@
 ---
 
 - name: Terminate any old instance(s)
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:
@@ -36,7 +36,7 @@
       register: ec2_prototype_instance
 
 - name: "create instance"
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:
@@ -65,7 +65,7 @@
         ec2_prototype_instance: "{{ ec2_prototype_instance }}"
 
 - name: Add new instance to host group {{ job_name }}-ami-instance
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:
@@ -122,7 +122,7 @@
     - script: "{{ imagedir }}/post_install.sh"
 
 - name: Create AMI from deployed instance
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:
@@ -147,7 +147,7 @@
           Tstamp: "{{ tstamp }}"
 
 - name: Terminate instance(s) used for creating AMI
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:
@@ -168,7 +168,7 @@
       register: ec2_prototype_instance
 
 - name: Clean up old AMIs, keep the latest 5
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:
@@ -189,7 +189,7 @@
       ignore_errors: yes
 
 - name: Write new AMI id to file {{ ami_id_file }}
-  hosts: 127.0.0.1
+  hosts: localhost
   connection: local
   gather_facts: no
   tasks:

@@ -42,7 +42,9 @@ cache () {
 
 [ "$SSH_USER" ] || SSH_USER=$IMAGETYPE
 [ "$FETCH_SECRETS" ] || FETCH_SECRETS=fetch-secrets.sh
-[ "$SUBNET" ] || SUBNET="$(cache show-stack-params-and-outputs.sh $REGION infra-network | jq -r .subnetInfraB)"
+[ "$NETWORK_STACK" ] || NETWORK_STACK=infra-network
+[ "$NETWORK_PARAMETER" ] || NETWORK_PARAMETER=subnetInfraB
+[ "$SUBNET" ] || SUBNET="$(cache show-stack-params-and-outputs.sh $REGION $NETWORK_STACK | jq -r .$NETWORK_PARAMETER)"
 [ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
 [ "$AMIBAKE_INSTANCEPROFILE" ] || AMIBAKE_INSTANCEPROFILE="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceInstanceprofile)"
 [ "$PAUSE_SECONDS" ] || PAUSE_SECONDS=15

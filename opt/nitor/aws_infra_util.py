@@ -139,7 +139,7 @@ def get_params(data, template):
     stackName = os.path.basename(template_dir)
     stackName = re.sub('^stack-', '', stackName)
 
-    get_vars_command = [ 'env', '-i', 'bash', '-c', 'source aws-utils/source_infra_properties.sh "' + imageName + '" "' + stackName + '" ; set' ]
+    get_vars_command = [ 'env', '-i', 'GIT_BRANCH=' + os.environ['GIT_BRANCH'], 'bash', '-c', 'source aws-utils/source_infra_properties.sh "' + imageName + '" "' + stackName + '" ; set' ]
     p = subprocess.Popen(get_vars_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     output = p.communicate()
     if p.returncode:

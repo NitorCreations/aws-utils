@@ -362,15 +362,19 @@ def extract_script(prefix, path, joinArgs):
     codeIdx = 0
     for s in joinArgs:
         if (type(s) is collections.OrderedDict):
-            varName = s['Ref']
-            if (not(len(varName) > 0)):
-                raise Exception("Failed to convert reference inside script: " + str(s))
-            bashVarName = bash_encode_parameter_name(varName)
-            varDecl = ""
-            #varDecl += "#" + varName + "\n"
-            varDecl += bashVarName + "=... ; echo \"FIXME!\" ; exit 1\n"
-            varDecls[varName] = varDecl
-            code[codeIdx] += "${" + bashVarName + "}"
+            if not 'Ref' in s:
+                print "Dict with no ref"
+                json_save(s)
+            else:
+                varName = s['Ref']
+                if (not(len(varName) > 0)):
+                    raise Exception("Failed to convert reference inside script: " + str(s))
+                bashVarName = bash_encode_parameter_name(varName)
+                varDecl = ""
+                #varDecl += "#" + varName + "\n"
+                varDecl += bashVarName + "=... ; echo \"FIXME!\" ; exit 1\n"
+                varDecls[varName] = varDecl
+                code[codeIdx] += "${" + bashVarName + "}"
         else:
             code[codeIdx] += s
         codeIdx = 1 # switch to "after" block

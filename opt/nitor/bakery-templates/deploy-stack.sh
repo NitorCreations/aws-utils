@@ -50,7 +50,7 @@ export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* 
 export paramAmi=$AMI_ID
 
 #If assume-deploy-role.sh is on the path, run it to assume the appropriate role for deployment
-if which assume-deploy-role.sh > /dev/null; then
+if which assume-deploy-role.sh > /dev/null && [ -z "$AWS_SESSION_TOKEN" ]; then
   eval $(assume-deploy-role.sh)
 fi
 

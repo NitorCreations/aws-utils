@@ -31,6 +31,10 @@ system_type() {
   (source /etc/os-release; echo $ID)
 }
 
+system_type_and_version() {
+  (source /etc/os-release; echo ${ID}_$VERSION_ID)
+}
+
 set_timezone() {
   # Timezone (based on http://askubuntu.com/a/623299 )
   if [ -z "$tz" ]; then

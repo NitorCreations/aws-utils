@@ -25,3 +25,6 @@ fi
 UTILS_VERSION=$AWSUTILS_VERSION
 curl -Ls https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
 echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version
+
+source /opt/nitor/common_tools.sh
+ln -snf /usr/bin/lpass_$(system_type_and_version) /usr/bin/lpass

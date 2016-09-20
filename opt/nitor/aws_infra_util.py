@@ -284,8 +284,11 @@ def import_scripts_pass2(data, templateFile, path, templateParams, resolveRefs):
     if (isinstance(data, collections.OrderedDict)):
         if ('Ref' in data):
             varName = data['Ref']
-            filename = data['__source']
-            del data['__source']
+            if '__source' in data:
+                filename = data['__source']
+                del data['__source']
+            else:
+                filename = "unknown"
             if (not varName in templateParams):
                 if ('__optional' in data):
                   data = data['__default']

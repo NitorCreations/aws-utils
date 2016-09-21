@@ -26,4 +26,10 @@ if which assume-deploy-role.sh > /dev/null && [ -z "$AWS_SESSION_TOKEN" ]; then
   eval $(assume-deploy-role.sh)
 fi
 
+# Delete will faul if S3 buckets have data - so delete those...
+for BUCKET in $(aws --region $REGION cloudformation list-stack-resources --stack-name dev-frontend \
+ | jq -r '.StackResourceSummaries[] | select(.ResourceType=="AWS::S3::Bucket")|.PhysicalResourceId'); do
+   aws s3 rm s3://$BUCKET --recursive
+done
+
 aws-utils/cloudformation-delete-stack.py "${STACK_NAME}" "$REGION"

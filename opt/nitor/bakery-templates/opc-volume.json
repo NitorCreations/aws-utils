@@ -1,0 +1,21 @@
+{
+  "description": "Simple orchestration plan with ssh keys and security list", 
+  "name": "\($CONTAINER)/\($ORACLE_USER)/orchestration_volume_\($BAKE_ID)", 
+  "oplans": [
+    {
+      "label": "volume", 
+      "obj_type": "storage/volume", 
+      "ha_policy": "monitor", 
+      "objects": [
+        {
+          "name": "\($CONTAINER)/\($ORACLE_USER)/volume_\($BAKE_ID)", 
+          "size": "10G", 
+          "index": 1, 
+          "properties": [
+            "/oracle/public/storage/default"
+          ]
+        }
+      ]
+    }
+  ]
+}

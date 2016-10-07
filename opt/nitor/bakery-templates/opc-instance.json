@@ -1,0 +1,40 @@
+{
+  "description": "Simple orchestration plan with ssh keys and security list", 
+  "name": "\($CONTAINER)/\($ORACLE_USER)/orchestration_instance_\($BAKE_ID)", 
+  "oplans": [
+    {
+      "label": "instance", 
+      "obj_type": "launchplan", 
+      "ha_policy": "active", 
+      "objects": [
+        {
+          "instances": [
+            {
+              "imagelist": "\($IMAGE_ID)", 
+              "label": "instance", 
+              "name": "\($CONTAINER)/\($ORACLE_USER)/instance_\($BAKE_ID)", 
+              "storage_attachments": [
+                {
+                  "index": 1, 
+                  "volume": "\($CONTAINER)/\($ORACLE_USER)/volume_\($BAKE_ID)"
+                }
+              ], 
+              "networking": {
+                "eth0": {
+                  "seclists": [
+                    "\($SECURITY_GROUP)"
+                  ], 
+                  "nat": "ippool:/oracle/public/ippool"
+                }
+              }, 
+              "shape": "oc3", 
+              "sshkeys": [
+                "\($SSH_KEY)"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

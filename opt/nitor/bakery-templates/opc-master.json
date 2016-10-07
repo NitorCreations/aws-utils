@@ -1,0 +1,32 @@
+{
+  "name": "\($CONTAINER)/\($ORACLE_USER)/orchestration_master_\($BAKE_ID)", 
+  "oplans": [
+    {
+      "label": "instance", 
+      "obj_type": "orchestration", 
+      "ha_policy": "monitor", 
+      "objects": [
+        {
+          "name": "\($CONTAINER)/\($ORACLE_USER)/orchestration_instance_\($BAKE_ID)"
+        }
+      ]
+    }, 
+    {
+      "label": "volume", 
+      "obj_type": "orchestration", 
+      "ha_policy": "monitor", 
+      "objects": [
+        {
+          "name": "\($CONTAINER)/\($ORACLE_USER)/orchestration_volume_\($BAKE_ID)"
+        }
+      ]
+    }
+  ], 
+  "relationships": [
+    {
+      "oplan": "instance", 
+      "to_oplan": "volume", 
+      "type": "depends"
+    }
+  ]
+}

@@ -50,8 +50,7 @@ case "$1" in
     # usage: fetch-secrets.sh logout
     shift
     if [ -e $logged_file ]; then
-      lastpass-logout.sh
-      rm -f $logged_file
+      lastpass-logout.sh || rm -f $logged_file
     fi
     ;;
   *)

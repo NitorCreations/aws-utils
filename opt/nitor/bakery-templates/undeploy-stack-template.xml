@@ -21,6 +21,15 @@
 Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{jobupdaterbuild}}.</description>
   <keepDependencies>false</keepDependencies>
   <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>CONFIRM</name>
+          <description>Enter YES as the parameter value to confirm to undeploy the stack.</description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
     <org.jenkinsci.plugins.blockqueuedjob.BlockItemJobProperty plugin="block-queued-job@0.2.0">
       <conditions>
         <org.jenkinsci.plugins.blockqueuedjob.condition.BuildingBlockQueueCondition>
@@ -62,6 +71,8 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
   <builders>
     <hudson.tasks.Shell>
       <command>#!/bin/bash -ex
+
+[[ $CONFIRM = &quot;YES&quot; ]]
 
 # Install tools
 rm -rf aws-utils

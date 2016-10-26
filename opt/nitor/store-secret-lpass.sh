@@ -19,20 +19,14 @@ CF_paramSecretsFolder='Certs'
 CF_paramSecretsUser="webmaster@nitorcreations.com"
 
 
-logged_file=/dev/shm/fetch-secrets-logged
-
 login_if_not_already () {
-  if [ ! -e $logged_file ]; then
+  if ! lpass ls not-meant-to-return-anything > /dev/null 2>&1; then
     s3-role-download.sh ${CF_paramSecretsBucket} webmaster.pwd - | lastpass-login.sh ${CF_paramSecretsUser} -
-    touch $logged_file
   fi
 }
 logout() {
   lpass sync
-  if [ -e $logged_file ]; then
-    lastpass-logout.sh
-    rm -f $logged_file
-  fi
+  lastpass-logout.sh
 }
 
 if [ -z "$1" ]; then

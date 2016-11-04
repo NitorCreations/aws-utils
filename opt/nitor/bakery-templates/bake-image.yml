@@ -70,11 +70,11 @@
   gather_facts: no
   tasks:
     - add_host: hostname={{ item.public_ip }} groupname={{ job_name }}-ami-instance
-      with_items: ec2_prototype_instance.tagged_instances
+      with_items: "{{ ec2_prototype_instance.tagged_instances }}"
     # Wait for ssh
 
     - wait_for: host={{ item.public_dns_name }} port=22 delay=60 timeout=320 state=started search_regex=OpenSSH
-      with_items: ec2_prototype_instance.tagged_instances
+      with_items: "{{ ec2_prototype_instance.tagged_instances }}"
 
     - name: Pause for a bit to work around startup related SSH access denied error
       pause: "seconds={{ pause_seconds }}"

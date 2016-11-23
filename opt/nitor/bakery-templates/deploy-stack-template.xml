@@ -83,12 +83,7 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
 
 # Install tools
 rm -rf aws-utils
-if true ; then
-  # latest release
-  UTILS_VERSION=$AWSUTILS_VERSION
-else
-  UTILS_VERSION=master
-fi
+UTILS_VERSION=master
 
 mkdir -p aws-utils
 wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 3 -C aws-utils

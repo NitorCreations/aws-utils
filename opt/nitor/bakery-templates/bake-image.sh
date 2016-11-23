@@ -40,12 +40,31 @@ cache () {
 
 # Set defaults if not customized
 
-[ "$SSH_USER" ] || SSH_USER=$IMAGETYPE
-[ "$FETCH_SECRETS" ] || FETCH_SECRETS=fetch-secrets.sh
+if ! [ "$SSH_USER" ]; then
+  if [ "$IMAGETYPE" = "windows" ]; then
+    SSH_USER="Administrator"
+  else
+    SSH_USER="$IMAGETYPE"
+  fi
+fi
+if ! [ "$FETCH_SECRETS" ]; then
+  if [ "$IMAGETYPE" = "windows" ]; then
+    FETCH_SECRETS=fetch-secrets.bat
+  else
+    FETCH_SECRETS=fetch-secrets.sh
+  fi
+fi
 [ "$NETWORK_STACK" ] || NETWORK_STACK=infra-network
 [ "$NETWORK_PARAMETER" ] || NETWORK_PARAMETER=subnetInfraB
 [ "$SUBNET" ] || SUBNET="$(cache show-stack-params-and-outputs.sh $REGION $NETWORK_STACK | jq -r .$NETWORK_PARAMETER)"
-[ "$SECURITY_GROUP" ] || SECURITY_GROUP="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceSg)"
+if ! [ "$SECURITY_GROUP" ]; then
+  if [ "$IMAGETYPE" != "windows" ]; then
+    SG_PARAM=".bakeInstanceSg"
+  else
+    SG_PARAM=".bakeWinInstanceSg"
+  fi
+  SECURITY_GROUP="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r $SG_PARAM)"
+fi
 [ "$AMIBAKE_INSTANCEPROFILE" ] || AMIBAKE_INSTANCEPROFILE="$(cache show-stack-params-and-outputs.sh $REGION bakery-roles | jq -r .bakeInstanceInstanceprofile)"
 [ "$PAUSE_SECONDS" ] || PAUSE_SECONDS=15
 for var in REGION SUBNET SECURITY_GROUP AMIBAKE_INSTANCEPROFILE ; do
@@ -66,19 +85,25 @@ AMI="${!VAR_AMI}"
 TSTAMP=$(date +%Y%m%d%H%M%S)
 
 cleanup() {
-  eval $(ssh-agent -k)
+  if [ "$IMAGETYPE" != "windows" ]; then
+    eval $(ssh-agent -k)
+  fi
 }
 trap cleanup EXIT
-eval $(ssh-agent)
-
-if [ -r "$HOME/.ssh/$AWS_KEY_NAME" ]; then
-  ssh-add "$HOME/.ssh/$AWS_KEY_NAME"
-elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
-  ssh-add "$HOME/.ssh/$AWS_KEY_NAME.pem"
-elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.rsa" ]; then
-  ssh-add "$HOME/.ssh/$AWS_KEY_NAME.rsa"
+if [ "$IMAGETYPE" != "windows" ]; then
+  eval $(ssh-agent)
+  if [ -r "$HOME/.ssh/$AWS_KEY_NAME" ]; then
+    ssh-add "$HOME/.ssh/$AWS_KEY_NAME"
+  elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.pem" ]; then
+    ssh-add "$HOME/.ssh/$AWS_KEY_NAME.pem"
+  elif [ -r "$HOME/.ssh/$AWS_KEY_NAME.rsa" ]; then
+    ssh-add "$HOME/.ssh/$AWS_KEY_NAME.rsa"
+  else
+    die "Failed to find ssh private key"
+  fi
 else
-  die "Failed to find ssh private key"
+  WIN_PASSWD="$(tr -cd '[:alnum:]' < /dev/urandom | head -c16)"
+  PASSWD_ARG="-e ansible_ssh_pass=$WIN_PASSWD -e ansible_winrm_server_cert_validation=ignore"
 fi
 
 if [ -z "$BUILD_NUMBER" ]; then
@@ -89,11 +114,13 @@ fi
 if [ -z "$JOB_NAME" ]; then
   JOB_NAME="${JENKINS_JOB_PREFIX}-${image}-bake"
 fi
-if ! [ -r $imagedir/pre_install.sh ]; then
-  echo -e "#!/bin/bash\n\nexit 0" > $imagedir/pre_install.sh
-fi
-if ! [ -r $imagedir/post_install.sh ]; then
-  echo -e "#!/bin/bash\n\nexit 0" > $imagedir/post_install.sh
+if [ "$IMAGETYPE" != "windows" ]; then
+  if ! [ -r $imagedir/pre_install.sh ]; then
+    echo -e "#!/bin/bash\n\nexit 0" > $imagedir/pre_install.sh
+  fi
+  if ! [ -r $imagedir/post_install.sh ]; then
+    echo -e "#!/bin/bash\n\nexit 0" > $imagedir/post_install.sh
+  fi
 fi
 touch $imagedir/packages.txt
 PACKAGES="$(aws-utils/list-file-to-json.py packages $imagedir/packages.txt)"
@@ -115,12 +142,17 @@ echo "$NAME" > name.txt
 export ANSIBLE_FORCE_COLOR=true
 export ANSIBLE_HOST_KEY_CHECKING=false
 
+if [ "$IMAGETYPE" = "windows" ]; then
+  PLAYBOOK="aws-utils/bakery-templates/bake-win-image.yml"
+else
+  PLAYBOOK="aws-utils/bakery-templates/bake-image.yml"
+fi
 rm -f ami.properties ||:
 if python -u $(which ansible-playbook) \
   -vvvv \
   --flush-cache \
   -i aws-utils/bakery-templates/bake-image-inventory \
-  aws-utils/bakery-templates/bake-image.yml \
+  $PLAYBOOK \
   -e tools_version=$paramAwsUtilsVersion \
   -e ami_tag=$AMI_TAG \
   -e ami_id_file=$(pwd -P)/ami-id.txt \
@@ -141,10 +173,11 @@ if python -u $(which ansible-playbook) \
   -e sg_id=$SECURITY_GROUP \
   -e amibake_instanceprofile=$AMIBAKE_INSTANCEPROFILE \
   -e pause_seconds=$PAUSE_SECONDS \
-   ; then
+  $PASSWD_ARG; then
 
   echo "AMI_ID=$(cat ami-id.txt)" > ami.properties
   echo "NAME=$(cat name.txt)" >> ami.properties
+  echo "WIN_PASSWD=$WIN_PASSWD" >> ami.properties
   echo "Baking complete."
   cat ami.properties
 else

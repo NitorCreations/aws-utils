@@ -84,7 +84,13 @@
     ansible_connection: winrm
     ansible_ssh_port: 5986
   tasks:
+  - win_file: path="C:\\nitor" state=directory
   - win_copy: src="{{ fetch_secrets }}" dest="C:\\Windows\\fetch-secrets.bat"
+  - win_copy: src="{{ imagedir }}/pre_install.ps1" dest="C:\\nitor\\pre_install.ps1"
+  - win_copy: src="{{ imagedir }}/post_install.ps1" dest="C:\\nitor\\post_install.ps1"
+  - win_shell: "C:\\nitor\\pre_install.ps1"
+    args:
+      chdir: "C:\\"
   - win_updates:
       category_names:
       - 'SecurityUpdates'
@@ -93,6 +99,9 @@
       - 'Updates'
   - win_chocolatey: name="{{ item }}"
     with_items: "{{ packages }}"
+  - win_shell: "C:\\nitor\\post_install.ps1"
+    args:
+      chdir: "C:\\"
 
 - name: Create AMI from deployed instance
   hosts: localhost

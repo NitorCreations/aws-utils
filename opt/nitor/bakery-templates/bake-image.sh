@@ -121,6 +121,13 @@ if [ "$IMAGETYPE" != "windows" ]; then
   if ! [ -r $imagedir/post_install.sh ]; then
     echo -e "#!/bin/bash\n\nexit 0" > $imagedir/post_install.sh
   fi
+else
+  if ! [ -r $imagedir/pre_install.ps1 ]; then
+    echo -e "exit 0\r" > $imagedir/pre_install.ps1
+  fi
+  if ! [ -r $imagedir/post_install.ps1 ]; then
+    echo -e "exit 0\r" > $imagedir/post_install.ps1
+  fi
 fi
 touch $imagedir/packages.txt
 PACKAGES="$(aws-utils/list-file-to-json.py packages $imagedir/packages.txt)"

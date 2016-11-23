@@ -103,10 +103,7 @@ if [ "$IMAGETYPE" != "windows" ]; then
   fi
 else
   WIN_PASSWD="$(tr -cd '[:alnum:]' < /dev/urandom | head -c16)"
-  PASSWD_ARG="-e ansible_ssh_pass=$WIN_PASSWD"
-  PASSWD_ARG="$PASSWD_ARG -e ansible_winrm_operation_timeout_sec=60"
-  PASSWD_ARG="$PASSWD_ARG -e ansible_winrm_read_timeout_sec=70"
-  PASSWD_ARG="$PASSWD_ARG -e ansible_winrm_server_cert_validation=ignore"
+  PASSWD_ARG="{\"ansible_ssh_pass\": \"$WIN_PASSWD\", \"ansible_winrm_operation_timeout_sec\": 60, \"ansible_winrm_read_timeout_sec\": 70, \"ansible_winrm_server_cert_validation\": \"ignore\"}"
 fi
 
 if [ -z "$BUILD_NUMBER" ]; then
@@ -176,7 +173,7 @@ if python -u $(which ansible-playbook) \
   -e sg_id=$SECURITY_GROUP \
   -e amibake_instanceprofile=$AMIBAKE_INSTANCEPROFILE \
   -e pause_seconds=$PAUSE_SECONDS \
-  $PASSWD_ARG; then
+  -e "$PASSWD_ARG"; then
 
   echo "AMI_ID=$(cat ami-id.txt)" > ami.properties
   echo "NAME=$(cat name.txt)" >> ami.properties

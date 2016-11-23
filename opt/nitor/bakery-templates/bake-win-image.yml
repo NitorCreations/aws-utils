@@ -83,8 +83,6 @@
   vars:
     ansible_connection: winrm
     ansible_ssh_port: 5986
-    ansible_winrm_operation_timeout_sec: 60
-    ansible_winrm_read_timeout_sec: 70
   tasks:
   - win_copy: src="{{ fetch_secrets }}" dest="C:\\Windows\\fetch-secrets.bat"
   - win_updates:

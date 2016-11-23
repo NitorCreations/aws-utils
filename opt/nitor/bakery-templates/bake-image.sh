@@ -103,7 +103,10 @@ if [ "$IMAGETYPE" != "windows" ]; then
   fi
 else
   WIN_PASSWD="$(tr -cd '[:alnum:]' < /dev/urandom | head -c16)"
-  PASSWD_ARG="-e ansible_ssh_pass=$WIN_PASSWD -e ansible_winrm_server_cert_validation=ignore"
+  PASSWD_ARG="-e ansible_ssh_pass=$WIN_PASSWD"
+  PASSWD_ARG="$PASSWD_ARG -e ansible_winrm_operation_timeout_sec=60"
+  PASSWD_ARG="$PASSWD_ARG -e ansible_winrm_read_timeout_sec=70"
+  PASSWD_ARG="$PASSWD_ARG -e ansible_winrm_server_cert_validation=ignore"
 fi
 
 if [ -z "$BUILD_NUMBER" ]; then

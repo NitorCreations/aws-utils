@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
 # Copyright 2016 Nitor Creations Oy
 #
@@ -14,18 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -xe
-
 if [ -z "$1" ]; then
-  AWSUTILS_VERSION=0.73
-else
-  AWSUTILS_VERSION="$1"
+  echo "usage: $0 logout|<name>"
+  echo "   Secret must be given in stdin"
+  exit 1
 fi
 
-UTILS_VERSION=$AWSUTILS_VERSION
-curl -Ls https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 1 -C /
-echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version
+if [ "$1" = "logout" ]; then
+  exit 0
+fi
 
-source /opt/nitor/common_tools.sh
-ln -snf /usr/bin/lpass_$(system_type_and_version) /usr/bin/lpass
-pip install nitor-deploy-tools
+vault -s "$1" -f - <&0

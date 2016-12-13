@@ -175,7 +175,7 @@
     - ec2_ami_find:
         region: "{{ aws_region }}"
         owner: self
-        name: "{{ job_name }}_????"
+        name: "{{ job_name }}_*"
         sort: name
         sort_end: -5
       register: old_ami_result

@@ -28,4 +28,4 @@ echo $AWSUTILS_VERSION > /opt/nitor/aws-utils.version
 
 source /opt/nitor/common_tools.sh
 ln -snf /usr/bin/lpass_$(system_type_and_version) /usr/bin/lpass
-pip install nitor-deploy-tools
+pip install -U pip setuptools nitor-deploy-tools awscli boto3

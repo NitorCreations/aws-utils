@@ -156,7 +156,23 @@
     - ec2_ami_find:
         region: "{{ aws_region }}"
         owner: self
-        name: "{{ job_name }}_*"
+        name: "{{ job_name }}_????"
+        sort: name
+        sort_end: -5
+      register: old_ami_result
+
+    - ec2_ami:
+        region: "{{ aws_region }}"
+        image_id: "{{ item.ami_id }}"
+        delete_snapshot: yes
+        state: absent
+      with_items: old_ami_result.results
+      ignore_errors: yes
+
+    - ec2_ami_find:
+        region: "{{ aws_region }}"
+        owner: self
+        name: "{{ job_name }}_??????????????"
         sort: name
         sort_end: -5
       register: old_ami_result

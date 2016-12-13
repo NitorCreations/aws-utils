@@ -167,7 +167,7 @@
         wait: no
       register: ec2_prototype_instance
 
-- name: Clean up old AMIs, keep the latest 5
+- name: Clean up old AMIs, keep the latest 5 (build numbers)
   hosts: localhost
   connection: local
   gather_facts: no
@@ -175,7 +175,7 @@
     - ec2_ami_find:
         region: "{{ aws_region }}"
         owner: self
-        name: "{{ job_name }}_*"
+        name: "{{ job_name }}_????"
         sort: name
         sort_end: -5
       register: old_ami_result
@@ -185,7 +185,28 @@
         image_id: "{{ item.ami_id }}"
         delete_snapshot: yes
         state: absent
-      with_items: old_ami_result.results
+      with_items: "{{ old_ami_result.results }}"
+      ignore_errors: yes
+
+- name: Clean up old AMIs, keep the latest 5 (timestamps)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - ec2_ami_find:
+        region: "{{ aws_region }}"
+        owner: self
+        name: "{{ job_name }}_??????????????"
+        sort: name
+        sort_end: -5
+      register: old_ami_result_tstamped
+
+    - ec2_ami:
+        region: "{{ aws_region }}"
+        image_id: "{{ item.ami_id }}"
+        delete_snapshot: yes
+        state: absent
+      with_items: "{{ old_ami_result_tstamped.results }}"
       ignore_errors: yes
 
 - name: Write new AMI id to file {{ ami_id_file }}

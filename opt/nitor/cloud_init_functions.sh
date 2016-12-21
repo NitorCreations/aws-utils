@@ -63,4 +63,4 @@ status=FAILURE
 logs-to-cloudwatch /var/log/cloud-init-output.log &
 LOG_TAILER=$!
 
-[ "${INSTANCE_ID}" ] || INSTANCE_ID=$(jq -r .instanceId < /opt/nitor/instance-data.json)
+[ "${INSTANCE_ID}" ] || INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)

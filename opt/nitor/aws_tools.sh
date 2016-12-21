@@ -16,27 +16,17 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/common_tools.sh"
 
-# Required parameters: CF_AWS__Region, INSTANCE_ID
-# Optional parameters: CF_paramEipAllocationId OR CF_paramEip
+# Optional parameters in CloudFormation stack: paramEipAllocationId OR paramEip
 # Required template policies when CF_paramEipAllocationId is used: ec2:AssociateAddress
 # Required template policies when CF_paramEip is used: ec2:AssociateAddress, ec2:DescribeAddresses
 aws_ec2_associate_address () {
-  check_parameters CF_AWS__Region INSTANCE_ID
-  if [ ! "$CF_paramEipAllocationId" ]; then
-    if [ "${CF_paramEip}" ]; then
-      CF_paramEipAllocationId="$(set -e ; aws --region ${CF_AWS__Region} ec2 describe-addresses --public-ips "${CF_paramEip}" | jq -r '.Addresses[0].AllocationId')"
-    fi
-  fi
-  if [ ! "$CF_paramEipAllocationId" ]; then
-    echo "IP address not associated - neither paramEip nor paramEipAllocationId configured (either is sufficient)"
-  elif ! aws --region "${CF_AWS__Region}" ec2 associate-address --instance-id "$INSTANCE_ID" --allocation-id "${CF_paramEipAllocationId}" --allow-reassociation; then
-    echo "IP address association failed!"
-    exit 1
-  fi
+  associate-eip
 }
 
-# Required parameters: CF_AWS__Region, CF_AWS__StackName
+# Required parameters in CloudFormation: CF_AWS__Region, CF_AWS__StackName
 aws_install_metadata_files () {
+  [ "$CF_AWS__StackName" ] || CF_AWS__StackName = "$(jq -r .FullStackData.StackName < /opt/nitor/instance-data.json)"
+  [ "$CF_AWS__Region" ] || CF_AWS__Region = "$(jq -r .FullStackData.StackId < /opt/nitor/instance-data.json | cut -d: -f 4)"
   check_parameters CF_AWS__StackName CF_AWS__Region
   cfn-init -v --stack "${CF_AWS__StackName}" --resource resourceLc --region "${CF_AWS__Region}"
 }

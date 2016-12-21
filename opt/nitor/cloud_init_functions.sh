@@ -48,45 +48,19 @@ Required template policies - please update all the Ref resource names as necessa
       - {Ref: roleResource}
 EOF
 
-onexit_sendlogs () {
-  local cloudwatch_log_group="instanceDeployment"
-  aws --region "${CF_AWS__Region}" logs create-log-group --log-group-name "${cloudwatch_log_group}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
-  aws --region "${CF_AWS__Region}" logs create-log-stream --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" 2>&1 | grep -v ResourceAlreadyExistsException ||:
-  logSeqId=$(aws --region "${CF_AWS__Region}" logs describe-log-streams --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" | jq -r '.logStreams[0].uploadSequenceToken')
-  [ "$logSeqId" != "null" ] && logSeqArg=--sequence-token || logSeqId=
-  {
-    date="$(date "+%F %T")"
-    [ "${CF_paramAmiName}" ] && ami="${CF_paramAmiName}" || ami="${CF_paramAmi}"
-    case "${INITIAL_STATUS}" in
-      *CREATE*) instanceType=CREATE ;;
-      *ROLLBACK*) instanceType=ROLLBACK ;;
-      *_*) instanceType=UPDATE ;;
-      *) instanceType=UNKNOWN ;;
-    esac
-    # template git commit sha would be nice also
-    echo "${date} ${instanceType} ${status} ${CF_AWS__StackName} ${ami}"
-    cat /var/log/cloud-init-output.log
-  } | jq -s -R '[{ timestamp: '`date +%s`'000, message: . }]' \
-    | aws --region "${CF_AWS__Region}" logs put-log-events --log-group-name "${cloudwatch_log_group}" --log-stream-name "${CF_AWS__StackName}" --log-events file:///dev/stdin $logSeqArg $logSeqId
-}
-
 onexit () {
   echo -----------------------------------------------------------------
   set +e
   if [ -x /opt/nitor/fetch-secrets.sh ]; then
     /opt/nitor/fetch-secrets.sh logout
   fi
-  onexit_sendlogs
-  aws --region "${CF_AWS__Region}" cloudformation signal-resource --stack-name ${CF_AWS__StackName} --logical-resource-id resourceAsg --unique-id $INSTANCE_ID --status $status
+  signal-cf-status $status
+  kill $LOG_TAILER
 }
-
-[ "${INSTANCE_ID}" ] || INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
-[ "${INITIAL_STATUS}" ] || INITIAL_STATUS="$(aws --region "${CF_AWS__Region}" cloudformation describe-stacks --stack-name "${CF_AWS__StackName}" | jq -r '.Stacks[0].StackStatus')"
 
 trap onexit EXIT
 status=FAILURE
+logs-to-cloudwatch /var/log/cloud-init-output.log &
+LOG_TAILER=$!
 
-if [ ! "${CF_AWS__StackName}" -o ! "${CF_paramAmi}" -o ! "${CF_AWS__Region}" ]; then # CF_paramAmiName may be empty so don't check for it
-  echo Missing parameters - need CF_AWS__StackName, CF_paramAmi, CF_paramAmiName, CF_AWS__Region
-  exit 1
-fi
+[ "${INSTANCE_ID}" ] || INSTANCE_ID=$(jq -r .instanceId < /opt/nitor/instance-data.json)

@@ -39,6 +39,11 @@ install_phantomjs() {
   mv phantomjs-*/bin/phantomjs /usr/bin
   rm -rf phantomjs-*
 }
+install_yarn() {
+  mkdir /opt/yarn
+  # The tarball unpacks to dist/, we strip that out
+  wget -O - https://yarnpkg.com/latest.tar.gz | tar --strip-components=1 -C /opt/yarn -xzv
+}
 install_cftools() {
   curl -s https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz | tar -xzvf -
   cd aws-cfn-bootstrap-*

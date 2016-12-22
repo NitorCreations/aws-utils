@@ -55,6 +55,7 @@ onexit () {
     /opt/nitor/fetch-secrets.sh logout
   fi
   signal-cf-status $status
+  sleep 5
   kill $LOG_TAILER
 }
 

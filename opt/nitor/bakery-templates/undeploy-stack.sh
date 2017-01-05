@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2016 Nitor Creations Oy
+# Copyright 2016-2017 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@ if which assume-deploy-role.sh > /dev/null && [ -z "$AWS_SESSION_TOKEN" ]; then
 fi
 
 # Delete will faul if S3 buckets have data - so delete those...
-for BUCKET in $(aws --region $REGION cloudformation list-stack-resources --stack-name dev-frontend \
+for BUCKET in $(aws --region $REGION cloudformation list-stack-resources --stack-name ${STACK_NAME} \
  | jq -r '.StackResourceSummaries[] | select(.ResourceType=="AWS::S3::Bucket")|.PhysicalResourceId'); do
    aws s3 rm s3://$BUCKET --recursive
 done
 
-aws-utils/cloudformation-delete-stack.py "${STACK_NAME}" "$REGION"
+cf-delete-stack "${STACK_NAME}" "$REGION"

@@ -27,8 +27,8 @@ PolicyDocument:
     - 'logs:CreateLogStream'
     - 'logs:PutLogEvents'
     - 'logs:DescribeLogStreams'
-    - 'ec2:DescribeTags'
   - Effect: Allow
     Resource: '*'
     Action:
+    - 'ec2:DescribeTags'
     - 'cloudformation:SignalResource'

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Copyright 2016 Nitor Creations Oy
+# Copyright 2016-2017 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ MARKER
     fi
     DEPLOYER_PWD=$(/opt/nitor/fetch-secrets.sh show "$CF_paramMvnDeployId")
     export DEPLOYER_PASSWORD=$(sudo -iu jenkins mvn -ep "$DEPLOYER_PWD")
-    add-deployer-server.py "$MAVEN_HOME/settings.xml" "$CF_paramMvnDeployId"
+    add-deployer-server "$MAVEN_HOME/settings.xml" "$CF_paramMvnDeployId"
   fi
   chown -R jenkins:jenkins /var/lib/jenkins/ /var/lib/jenkins/jenkins-home/
 }

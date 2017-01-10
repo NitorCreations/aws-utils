@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2016 Nitor Creations Oy
+# Copyright 2016-2017 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,6 +46,6 @@ if [ "$IMAGE_STATUS" != "available" ]; then
 else
   echo "$(date +%Y-%m-%d-%H:%M:%S) sharing $IMAGE_ID with $@"
   DIR=$(cd $(dirname $0); pwd -P)
-  IDS=$($DIR/create-userid-list.py "$@")
+  IDS=$(create-userid-list "$@")
   aws --region "$REGION" ec2 modify-image-attribute --image-id "$IMAGE_ID" --launch-permission "$IDS"
 fi

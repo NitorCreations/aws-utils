@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2016 Nitor Creations Oy
+# Copyright 2016-2017 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -130,11 +130,11 @@ else
   fi
 fi
 touch $imagedir/packages.txt
-PACKAGES="$(aws-utils/list-file-to-json.py packages $imagedir/packages.txt)"
+PACKAGES="$(list-file-to-json packages $imagedir/packages.txt)"
 if [ "$IMAGETYPE" = "ubuntu" ]; then
   touch $imagedir/repos.txt $imagedir/keys.txt
-  REPOS="$(aws-utils/list-file-to-json.py repos $imagedir/repos.txt)"
-  KEYS="$(aws-utils/list-file-to-json.py keys $imagedir/keys.txt)"
+  REPOS="$(list-file-to-json repos $imagedir/repos.txt)"
+  KEYS="$(list-file-to-json keys $imagedir/keys.txt)"
   extra_args=( -e "$REPOS" -e "$KEYS" )
 else
   extra_args=( -e '{"repos": []}' -e '{"keys": []}' )

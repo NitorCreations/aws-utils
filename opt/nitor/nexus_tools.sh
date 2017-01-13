@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# Copyright 2016 Nitor Creations Oy
+# Copyright 2016-2017 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,15 @@ configure_and_start_nexus () {
     ADMIN_HASH=$(java -jar shiro-tools-hasher-1.2.4-cli.jar -r .repo.pwd -a SHA-512 -f shiro1)
     cd $HOME
     umount -f $SECTMP
+    if [ "$(set -o | grep xtrace | awk '{ print $2 }')" = "on" ]; then
+      set +x
+      RESET_XTRACE="true"
+    fi
     sed -e 's#%ADMIN_HASH%#'"$ADMIN_HASH"'#g' -e 's/%domain%/'"${CF_paramDnsName#*.}"'/g' /root/security.xml > /opt/nexus/sonatype-work/nexus/conf/security.xml
+    if [ "$RESET_XTRACE" ]; then
+      unset RESET_XTRACE
+      set -x
+    fi
     chown -R nexus:nexus /opt/nexus
   fi
   sed -i 's#localhost\:8080#localhost\:8081#' /etc/httpd/conf.d/ssl.conf

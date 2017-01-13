@@ -46,6 +46,10 @@ MARKER
     mkdir -p "$MAVEN_HOME"
     chmod 700 "$MAVEN_HOME"
     if ! [ -r "$MAVEN_HOME/settings-security.xml" ]; then
+      if [ "$(set -o | grep xtrace | awk '{ print $2 }')" = "on" ]; then
+        set +x
+        RESET_XTRACE="true"
+      fi
       MASTER_PWD=$(mvn -emp "$(cat /dev/urandom | tr -cd [:alnum:] | head -c 12)")
       cat > "$MAVEN_HOME/settings-security.xml" << MARKER
 <settingsSecurity>
@@ -65,6 +69,10 @@ MARKER
     DEPLOYER_PWD=$(/opt/nitor/fetch-secrets.sh show "$CF_paramMvnDeployId")
     export DEPLOYER_PASSWORD=$(sudo -iu jenkins mvn -ep "$DEPLOYER_PWD")
     add-deployer-server "$MAVEN_HOME/settings.xml" "$CF_paramMvnDeployId"
+    if [ "$RESET_XTRACE" ]; then
+      unset RESET_XTRACE
+      set -x
+    fi
   fi
   chown -R jenkins:jenkins /var/lib/jenkins/ /var/lib/jenkins/jenkins-home/
 }

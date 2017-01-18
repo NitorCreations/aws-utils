@@ -1,8 +1,24 @@
 #jinja2: newline_sequence:'\r\n'
 <powershell>
-$admin = [adsi]("WinNT://./administrator, user")
-$admin.PSBase.Invoke("SetPassword", "{{ ansible_ssh_pass }}")
-net user Administrator "{{ ansible_ssh_pass }}"
-Invoke-Expression ((New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1'))
-winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+#ansible-bake
+$ErrorActionPreference="SilentlyContinue"
+Stop-Transcript | out-null
+$ErrorActionPreference = "Continue"
+Start-Transcript -path C:\nitor\cloud-init-output.log
+set PYTHONIOENCODING=UTF-8
+Set-ExecutionPolicy Unrestricted
+echo "set PYTHONIOENCODING=UTF-8" > C:\nitor\UserData.ps1
+ec2-get-userdata - | sls -n powershell >> C:\nitor\UserData.ps1
+if (sls '#ansible-bake' C:\nitor\UserData.ps1) {
+  echo "Baking"
+  $admin = [adsi]("WinNT://./administrator, user")
+  $admin.PSBase.Invoke("SetPassword", "{{ ansible_ssh_pass }}")
+  net user Administrator "{{ ansible_ssh_pass }}"
+  Invoke-Expression ((New-Object System.Net.Webclient).DownloadString('https://raw.githubusercontent.com/ansible/ansible/devel/examples/scripts/ConfigureRemotingForAnsible.ps1'))
+  winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+} else {
+   echo "Not Baking"
+   C:\nitor\UserData.ps1
+}
+Stop-Transcript
 </powershell>

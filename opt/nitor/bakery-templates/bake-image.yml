@@ -98,6 +98,13 @@
         home: "{{ app_home }}"
         createhome: yes
     - shell: bash -c 'sleep 54m ; shutdown -P +1' &
+    - copy:
+        src: "{{ imagedir }}/{{ item }}"
+        dest: /opt/nitor/
+        owner: root
+        group: root
+        mode: 0644
+      with_items: "{{ files }}"
     - apt_repository: repo="{{ item }}"
       with_items: "{{ repos }}"
       when: ansible_os_family == "Debian"

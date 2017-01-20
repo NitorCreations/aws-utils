@@ -131,6 +131,8 @@ else
 fi
 touch $imagedir/packages.txt
 PACKAGES="$(list-file-to-json packages $imagedir/packages.txt)"
+touch $imagedir/files.txt
+FILES="$(list-file-to-json files $imagedir/files.txt)"
 if [ "$IMAGETYPE" = "ubuntu" ]; then
   touch $imagedir/repos.txt $imagedir/keys.txt
   REPOS="$(list-file-to-json repos $imagedir/repos.txt)"
@@ -169,6 +171,7 @@ if python -u $(which ansible-playbook) \
   -e app_home=$APP_HOME \
   -e build_number=$BUILD_NUMBER \
   -e "$PACKAGES" \
+  -e "$FILES" \
   "${extra_args[@]}" \
   -e root_ami=$AMI \
   -e tstamp=$TSTAMP \

@@ -25,7 +25,7 @@ shift ||:
 
 source aws-utils/source_infra_properties.sh "$image" "$stackName"
 export $(set | egrep -o '^param[a-zA-Z0-9_]+=' | tr -d '=') # export any param* variable defined in the infra-<branch>.properties files
-export AMI_ID IMAGE_JOB
+export AMI_ID IMAGE_JOB CF_BUCKET
 
 #If assume-deploy-role.sh is on the path, run it to assume the appropriate role for deployment
 if which assume-deploy-role.sh > /dev/null && [ -z "$AWS_SESSION_TOKEN" ]; then

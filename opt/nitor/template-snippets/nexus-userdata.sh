@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-# Copyright 2016 Nitor Creations Oy
+# Copyright 2016-2017 Nitor Creations Oy
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +56,5 @@ nexus_setup_snapshot_cron
 ssh_install_hostkeys
 ssh_restart_service
 
-aws_ec2_associate_address
-
+ec2-associate-eip
 source /opt/nitor/cloud_init_footer.sh

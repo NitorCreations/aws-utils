@@ -62,7 +62,7 @@ onexit () {
 trap onexit EXIT
 status=FAILURE
 if ! [ "$LOG_TAILER" ]; then
-  logs-to-cloudwatch /var/log/cloud-init-output.log &
+  cf-logs-to-cloudwatch /var/log/cloud-init-output.log &
   LOG_TAILER=$!
 fi
 

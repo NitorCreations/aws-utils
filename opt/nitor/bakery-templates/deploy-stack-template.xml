@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!--
- Copyright 2016 Nitor Creations Oy
+ Copyright 2016-2017 Nitor Creations Oy
 
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -79,16 +79,7 @@ Job updated {{updatetime}} from &quot;{{template}}&quot; by {{jobupdater}} {{job
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>#!/bin/bash -ex
-
-# Install tools
-rm -rf aws-utils
-UTILS_VERSION=master
-
-mkdir -p aws-utils
-wget -O - https://github.com/NitorCreations/aws-utils/archive/$UTILS_VERSION.tar.gz | tar -xzf - --strip 3 -C aws-utils
-
-./aws-utils/bakery-templates/deploy-stack.sh &quot;{{image}}&quot; &quot;{{stack}}&quot; &quot;$AMI_ID&quot; &quot;{{imagejob}}&quot;
+      <command>deploy-stack.sh &quot;{{image}}&quot; &quot;{{stack}}&quot; &quot;$AMI_ID&quot; &quot;{{imagejob}}&quot;
 </command>
     </hudson.tasks.Shell>
   </builders>
